@@ -9,7 +9,7 @@ EPOCH := $(shell date +%s)
 TAGS := $(shell git tag --contains $(GITCOMMIT))
 
 TOP_DIR = $(shell python -c "import os.path as p; print(p.abspath('../..'))")
-TOP_DIR_NAME = $(shell basename $(TOP_DIR))
+TOP_DIR_NAME = $(shell python -c "import os.path as p; print(p.basename(p.abspath('../..')))")
 DIR = $(shell pwd)
 
 ANT ?= ant
@@ -59,7 +59,7 @@ bin: jars-submodule-init
 	echo '#!/bin/bash' > bin/kb-sdk
 	echo 'DIR=$(DIR)' >> bin/kb-sdk
 	echo 'KBASE_JARS_DIR=$$DIR/submodules/jars/lib/jars' >> bin/kb-sdk
-	@# Next command processes links in JAR_DEPS_BIN file and has 5 parts (one on each line): 
+	@# Next command processes links in JAR_DEPS_BIN file and has 5 parts (one on each line):
 	@#  (1) removing comments
 	@#  (2) trimming each line (picking first word actually)
 	@#  (3) skipping empty lines

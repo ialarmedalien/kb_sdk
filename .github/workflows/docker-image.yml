@@ -37,14 +37,17 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
           make
-          make sdkbase
-          /kb/deployment/bin/kb-sdk help
-          cd ..
-          /kb/deployment/bin/kb-sdk init --example -l python -u sychan MyContigFilter
+          env
+          bin/kb-sdk help
+          bin/kb-sdk init --example -l python -u sychan MyContigFilter
+          bin/kb-sdk init --example -l perl -u user PerlExample
           cd MyContigFilter
           make
           /kb/deployment/bin/kb-sdk validate
           cd ..
-          /kb/deployment/bin/kb-sdk init --example -l perl -u user PerlExample
+
           cd PerlExample
           /kb/deployment/bin/kb-sdk test
+
+
+#          make sdkbase

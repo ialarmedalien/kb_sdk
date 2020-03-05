@@ -44,4 +44,8 @@ script:
   - cd MyContigFilter
   - make
   - kb-sdk validate
+  - cd ..
+  - kb-sdk init --example -l perl -u user PerlExample
+  - cd PerlExample
+  - kb-sdk test
 

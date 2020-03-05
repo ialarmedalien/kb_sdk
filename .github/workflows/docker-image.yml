@@ -38,13 +38,13 @@ jobs:
         run: |
           make
           make sdkbase
-          ./bin/kb-sdk help
+          /kb/deployment/bin/kb-sdk help
           cd ..
-          ./bin/kb-sdk init --example -l python -u sychan MyContigFilter
+          /kb/deployment/bin/kb-sdk init --example -l python -u sychan MyContigFilter
           cd MyContigFilter
           make
-          ./bin/kb-sdk validate
+          /kb/deployment/bin/kb-sdk validate
           cd ..
-          ./bin/kb-sdk init --example -l perl -u user PerlExample
+          /kb/deployment/bin/kb-sdk init --example -l perl -u user PerlExample
           cd PerlExample
-          ./bin/kb-sdk test
+          /kb/deployment/bin/kb-sdk test

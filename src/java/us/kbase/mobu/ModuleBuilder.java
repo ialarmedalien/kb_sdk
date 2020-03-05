@@ -49,7 +49,7 @@ public class ModuleBuilder {
     public static final String GLOBAL_SDK_HOME_ENV_VAR = "KB_SDK_HOME";
     public static final String DEFAULT_METHOD_STORE_URL = "https://appdev.kbase.us/services/narrative_method_store/rpc";
 
-    public static final String VERSION = "1.2.3";
+    public static final String VERSION = "1.2.3-alien";
 
     public static void main(String[] args) throws Exception {
 
@@ -73,26 +73,6 @@ public class ModuleBuilder {
         // add the 'help' command
         HelpCommandArgs help = new HelpCommandArgs();
         jc.addCommand(HELP_COMMAND, help);
-
-        // add the 'test' command
-        TestCommandArgs testArgs = new TestCommandArgs();
-        jc.addCommand(TEST_COMMAND, testArgs);
-
-        // add the 'version' command
-        VersionCommandArgs versionArgs = new VersionCommandArgs();
-        jc.addCommand(VERSION_COMMAND, versionArgs);
-
-        // add the 'rename' command
-        RenameCommandArgs renameArgs = new RenameCommandArgs();
-        jc.addCommand(RENAME_COMMAND, renameArgs);
-
-        // add the 'install' command
-        InstallCommandArgs installArgs = new InstallCommandArgs();
-        jc.addCommand(INSTALL_COMMAND, installArgs);
-
-        // add the 'run' command
-        RunCommandArgs runArgs = new RunCommandArgs();
-        jc.addCommand(RUN_COMMAND, runArgs);
 
         // print name and version
         printVersion();
@@ -158,6 +138,69 @@ public class ModuleBuilder {
                     validateArgs.methodStoreUrl, validateArgs.allowSyncMethods);
             return mv.validateAll();
         } catch (Exception e) {
+=======
+    	// parse the arguments and gracefully catch any errors
+    	try {
+    		jc.parse(args);
+    	} catch (RuntimeException e) {
+    		showError("Command Line Argument Error", e.getMessage());
+    		System.exit(1);
+    	}
+
+    	// if the help flag is set, then show some help and exit
+    	if(gArgs.help) {
+    		showBriefHelp(jc, System.out);
+    		return;
+    	}
+
+	    // no command entered, just print brief info and exit
+	    if(jc.getParsedCommand()==null) {
+	    	showBriefHelp(jc, System.out);
+	    	return;
+	    }
+
+	    // if we get here, we have a valid command, so process it and do stuff
+	    int returnCode = 0;
+	    if(jc.getParsedCommand().equals(HELP_COMMAND)) {
+		    showCommandUsage(jc,help,System.out);
+
+	    } else if(jc.getParsedCommand().equals(INIT_COMMAND)) {
+	    	returnCode = runInitCommand(initArgs,jc);
+	    } else if(jc.getParsedCommand().equals(VALIDATE_COMMAND)) {
+	    	returnCode = runValidateCommand(validateArgs,jc);
+	    } else if(jc.getParsedCommand().equals(COMPILE_COMMAND)) {
+	    	returnCode = runCompileCommand(compileArgs,jc);
+        } else if(jc.getParsedCommand().equals(TEST_COMMAND)) {
+            returnCode = runTestCommand(testArgs,jc);
+	    } else if (jc.getParsedCommand().equals(VERSION_COMMAND)) {
+	        returnCode = runVersionCommand(versionArgs, jc);
+	    } else if (jc.getParsedCommand().equals(RENAME_COMMAND)) {
+	        returnCode = runRenameCommand(renameArgs, jc);
+	    } else if (jc.getParsedCommand().equals(INSTALL_COMMAND)) {
+	        returnCode = runInstallCommand(installArgs, jc);
+	    } else if (jc.getParsedCommand().equals(RUN_COMMAND)) {
+	        returnCode = runRunCommand(runArgs, jc);
+	    }
+
+	    if(returnCode!=0) {
+	    	System.exit(returnCode);
+	    }
+    }
+
+    private static int runValidateCommand(ValidateCommandArgs validateArgs, JCommander jc) {
+    	// initialize
+    	if(validateArgs.modules==null) {
+    		validateArgs.modules = new ArrayList<String>();
+    	}
+    	if(validateArgs.modules.size()==0) {
+    		validateArgs.modules.add(".");
+    	}
+    	try {
+    	    ModuleValidator mv = new ModuleValidator(validateArgs.modules,validateArgs.verbose,
+    	            validateArgs.methodStoreUrl, validateArgs.allowSyncMethods);
+    	    return mv.validateAll();
+    	} catch (Exception e) {
+>>>>>>> 99deda8... Use github actions to build and test kb-sdk
             if (validateArgs.verbose)
                 e.printStackTrace();
             showError("Error while validating module", e.getMessage());
@@ -348,7 +391,7 @@ public class ModuleBuilder {
 
         try {
             ModuleTester tester = new ModuleTester();
-            returnCode = tester.runTests(testArgs.methodStoreUrl, testArgs.skipValidation, testArgs.allowSyncMethods);
+            returnCode = tester.runTests(testArgs.methodStoreUrl, testArgs.skipValidation, testArgs.allowSyncMethods, testArgs.passthroughArgs);
         }
         catch (Exception e) {
             if (testArgs.verbose)
@@ -665,6 +708,10 @@ public class ModuleBuilder {
         @Parameter(names={"-a","--allow_sync_method"}, description="Allow synchonous methods " +
                 "(advanced option, part of validation settings, default value is false)")
         boolean allowSyncMethods = false;
+
+        @Parameter(names={"-p", "--passthrough_args"}, description="Arguments to pass through " +
+                "to the test method", variableArity = true)
+        List<String> passthroughArgs = new ArrayList<>();
 
         @Parameter(names={"-v","--verbose"}, description="Print more details including error stack traces")
         boolean verbose = false;

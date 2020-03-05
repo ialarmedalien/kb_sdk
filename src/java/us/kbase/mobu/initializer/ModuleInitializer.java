@@ -19,6 +19,7 @@ import us.kbase.templates.TemplateFormatter;
 public class ModuleInitializer {
     public static final String DEFAULT_LANGUAGE = "python";
 
+<<<<<<< HEAD
     private String moduleName;
     private String userName;
     private String language;
@@ -153,7 +154,9 @@ public class ModuleInitializer {
             templateFiles.put("module_tox", Paths.get(moduleDir, "tox.ini"));
             break;
         case "perl":
-            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.pl"));
+            templateFiles.put("module_cpanfile", Paths.get(moduleDir, "cpanfile"));
+            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.t"));
+            templateFiles.put("module_test_perl_compile", Paths.get(moduleDir, "test", "00_compile.t"));
             break;
         case "r":
             templateFiles.put("module_test_r_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.r"));

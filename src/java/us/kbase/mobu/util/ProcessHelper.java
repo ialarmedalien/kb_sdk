@@ -4,7 +4,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.Map;
+import org.apache.commons.lang.StringUtils;
 /**
  * User: Roman
  * Date: 08.01.12
@@ -75,9 +76,27 @@ public class ProcessHelper {
             outPw = output;
         if (error != null)
             errPw = error;
-        process = cmd.cmdLine != null
-          ? Runtime.getRuntime().exec(cmd.cmdLine, null, workDir)
-          : Runtime.getRuntime().exec(cmd.cmdParts, null, workDir);
+        // insert
+        if (cmd.cmdLine != null) {
+            System.out.println("command: " + cmd.cmdLine );
+        }
+        else {
+            System.out.println("command: " + StringUtils.join(cmd.cmdParts, " ") );
+        }
+
+        ProcessBuilder processBuilder = cmd.cmdLine != null
+            ? new ProcessBuilder(cmd.cmdLine)
+            : new ProcessBuilder(cmd.cmdParts);
+
+        processBuilder.directory(workDir);
+        Map<String, String> env = processBuilder.environment();
+        env.put("KB_SDK_ACTIVE", "1");
+        process = processBuilder.start();
+
+        // done
+//         process = cmd.cmdLine != null
+//             ? Runtime.getRuntime().exec(cmd.cmdLine, null, workDir)
+//             : Runtime.getRuntime().exec(cmd.cmdParts, null, workDir);
         Thread outTh = readInNewThread(process.getInputStream(), outType);
         Thread errTh = readInNewThread(process.getErrorStream(), errType);
         if (input != null) {

@@ -9,7 +9,7 @@ EPOCH := $(shell date +%s)
 TAGS := $(shell git tag --contains $(GITCOMMIT))
 
 TOP_DIR = $(shell python -c "import os.path as p; print(p.abspath('../..'))")
-TOP_DIR_NAME = $(shell basename $(TOP_DIR))
+TOP_DIR_NAME = $(shell python -c "import os.path as p; print(p.basename(p.abspath('../..')))")
 DIR = $(shell pwd)
 
 ANT ?= ant

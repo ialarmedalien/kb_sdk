@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -83,7 +84,7 @@ public class ModuleTester {
         }
     }
 
-    public int runTests(String methodStoreUrl, boolean skipValidation, boolean allowSyncMethods)
+    public int runTests(String methodStoreUrl, boolean skipValidation, boolean allowSyncMethods, List<String> passthroughArgs)
             throws Exception {
         if (skipValidation) {
             System.out.println("Validation step is skipped");
@@ -127,9 +128,9 @@ public class ModuleTester {
             TemplateFormatter.formatTemplate("module_run_docker", moduleContext, runDockerSh);
         if (!testCfg.exists()) {
             TemplateFormatter.formatTemplate("module_test_cfg", moduleContext, testCfg);
-            System.out.println("Set KBase account credentials in test_local/test.cfg and then " +
-                    "test again");
-            return 1;
+//            System.out.println("Set KBase account credentials in test_local/test.cfg and then " +
+//            		"test again");
+//            return 1;
         }
         Properties props = new Properties();
         InputStream is = new FileInputStream(testCfg);
@@ -224,14 +225,19 @@ public class ModuleTester {
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
         try {
-            System.out.println();
             ProcessHelper.cmd("chmod", "+x", runTestsSh.getCanonicalPath()).exec(tlDir);
+            String extraArgs = passthroughArgs.size() > 0
+                ? StringUtils.join(passthroughArgs, " ")
+                : "";
+            System.out.println("Running the final command");
             int exitCode = ProcessHelper.cmd(
                 "bash",
                 DirUtils.getFilePath(runTestsSh),
                 callbackUrl == null
-                  ? "http://fakecallbackurl"
-                  : callbackUrl.toExternalForm()
+                    ? "http://fakecallbackurl"
+                    : callbackUrl.toExternalForm(),
+                "KB_SDK_TEST=1",
+                extraArgs
             ).exec(tlDir).getExitCode();
             return exitCode;
         } finally {

@@ -128,9 +128,9 @@ public class ModuleTester {
             TemplateFormatter.formatTemplate("module_run_docker", moduleContext, runDockerSh);
         if (!testCfg.exists()) {
             TemplateFormatter.formatTemplate("module_test_cfg", moduleContext, testCfg);
-            System.out.println("Set KBase account credentials in test_local/test.cfg and then " +
-            		"test again");
-            return 1;
+//            System.out.println("Set KBase account credentials in test_local/test.cfg and then " +
+//            		"test again");
+//            return 1;
         }
         Properties props = new Properties();
         InputStream is = new FileInputStream(testCfg);

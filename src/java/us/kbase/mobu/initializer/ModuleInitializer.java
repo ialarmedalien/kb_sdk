@@ -99,6 +99,7 @@ public class ModuleInitializer {
 
 		Map<String, Object> moduleContext = new HashMap<String, Object>();
 		moduleContext.put("module_name", this.moduleName);
+		moduleContext.put("module_name_lc", this.moduleName.toLowerCase());
 		moduleContext.put("user_name", this.userName);
 		moduleContext.put("spec_file", specFile);
 		moduleContext.put("language", this.language);

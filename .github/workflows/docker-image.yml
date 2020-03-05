@@ -38,8 +38,6 @@ jobs:
         run: |
           make
           make sdkbase
-        #  export PATH=$(pwd)/bin:$PATH
-        #  source src/sh/sdk-completion.sh
           ./bin/kb-sdk help
           cd ..
           ./bin/kb-sdk init --example -l python -u sychan MyContigFilter

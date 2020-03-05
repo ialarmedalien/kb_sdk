@@ -43,11 +43,9 @@ jobs:
           bin/kb-sdk init --example -l perl -u user PerlExample
           cd MyContigFilter
           make
-          /kb/deployment/bin/kb-sdk validate
-          cd ..
-
-          cd PerlExample
-          /kb/deployment/bin/kb-sdk test
+          ../bin/kb-sdk validate
+          cd ../PerlExample
+          ../bin/kb-sdk test
 
 
 #          make sdkbase

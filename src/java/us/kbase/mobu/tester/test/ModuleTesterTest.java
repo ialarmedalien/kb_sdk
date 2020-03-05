@@ -23,10 +23,10 @@ public class ModuleTesterTest {
 
 	private static final String SIMPLE_MODULE_NAME = "ASimpleModule_for_unit_testing";
 	private static final boolean cleanupAfterTests = true;
-	
+
 	private static List<String> createdModuleNames = new ArrayList<String>();
 	private static AuthToken token;
-	
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         token = TestConfigHelper.getToken();
@@ -39,26 +39,26 @@ public class ModuleTesterTest {
 	            try {
 	                deleteDir(moduleName);
 	            } catch (Exception ex) {
-	                System.err.println("Error cleaning up module [" + 
+	                System.err.println("Error cleaning up module [" +
 	                        moduleName + "]: " + ex.getMessage());
 	            }
 	}
-	
+
 	@After
 	public void afterText() {
 	    System.out.println();
 	}
-	
+
 	private static void deleteDir(String moduleName) throws Exception {
 		File module = new File(moduleName);
 		if (module.exists() && module.isDirectory())
 			FileUtils.deleteDirectory(module);
 	}
-	
+
     private void init(String lang, String moduleName) throws Exception {
         deleteDir(moduleName);
         createdModuleNames.add(moduleName);
-        ModuleInitializer initer = new ModuleInitializer(moduleName, token.getUserName(), 
+        ModuleInitializer initer = new ModuleInitializer(moduleName, token.getUserName(),
                 lang, false);
         initer.initialize(true);
     }
@@ -71,10 +71,10 @@ public class ModuleTesterTest {
 	public static int runTestsInDocker(File moduleDir, AuthToken token) throws Exception {
 	    return runTestsInDocker(moduleDir, token, false);
 	}
-    
+
     public static int runTestsInDocker(
             final File moduleDir,
-            final AuthToken token, 
+            final AuthToken token,
             final boolean skipValidation)
             throws Exception {
         DockerClientServerTester.correctDockerfile(moduleDir);
@@ -83,11 +83,11 @@ public class ModuleTesterTest {
                 "test_token=" + token.getToken() + "\n" +
                 "kbase_endpoint=" + TestConfigHelper.getKBaseEndpoint() + "\n" +
                 "auth_service_url=" + TestConfigHelper.getAuthServiceUrl() + "\n" +
-                "auth_service_url_allow_insecure=" + 
+                "auth_service_url_allow_insecure=" +
                     TestConfigHelper.getAuthServiceUrlInsecure() + "\n";
         FileUtils.writeStringToFile(testCfgFile, testCfgText);
         int exitCode = new ModuleTester(moduleDir).runTests(ModuleBuilder.DEFAULT_METHOD_STORE_URL,
-                skipValidation, false);
+                skipValidation, false, null);
         System.out.println("Exit code: " + exitCode);
         return exitCode;
     }
@@ -110,7 +110,7 @@ public class ModuleTesterTest {
 	    init(lang, moduleName);
 	    File implFile = new File(moduleName + "/lib/" + moduleName + "/" + moduleName + "Impl.pm");
 	    String implText = FileUtils.readFileToString(implFile);
-	    implText = implText.replace("    #BEGIN filter_contigs", 
+	    implText = implText.replace("    #BEGIN filter_contigs",
 	            "    #BEGIN filter_contigs\n" +
 	            "    die \"Special error\";");
 	    FileUtils.writeStringToFile(implFile, implText);
@@ -136,7 +136,7 @@ public class ModuleTesterTest {
         init(lang, moduleName);
         File implFile = new File(moduleName + "/lib/" + moduleName + "/" + moduleName + "Impl.py");
         String implText = FileUtils.readFileToString(implFile);
-        implText = implText.replace("    #BEGIN filter_contigs", 
+        implText = implText.replace("    #BEGIN filter_contigs",
                 "        #BEGIN filter_contigs\n" +
                 "        raise ValueError('Special error')");
         FileUtils.writeStringToFile(implFile, implText);
@@ -163,7 +163,7 @@ public class ModuleTesterTest {
         File implFile = new File(moduleName + "/lib/src/" +
         		"asimplemoduleforunittestingjavaerror/ASimpleModuleForUnitTestingJavaErrorServer.java");
         String implText = FileUtils.readFileToString(implFile);
-        implText = implText.replace("        //BEGIN filter_contigs", 
+        implText = implText.replace("        //BEGIN filter_contigs",
                 "        //BEGIN filter_contigs\n" +
                 "        if (true) throw new IllegalStateException(\"Special error\");");
         FileUtils.writeStringToFile(implFile, implText);
@@ -179,14 +179,14 @@ public class ModuleTesterTest {
         init(lang, moduleName);
         File implFile = new File(moduleName + "/lib/" + moduleName + "/" + moduleName + "Impl.r");
         String implText = FileUtils.readFileToString(implFile);
-        implText = implText.replace("    #BEGIN count_contigs", 
+        implText = implText.replace("    #BEGIN count_contigs",
                 "    #BEGIN count_contigs\n" +
                 "    stop(\"Special error\")");
         FileUtils.writeStringToFile(implFile, implText);
         int exitCode = runTestsInDocker(moduleName);
         Assert.assertEquals(2, exitCode);
     }
-    
+
     @Test
     public void testSelfCalls() throws Exception {
         System.out.println("Test [testSelfCalls]");
@@ -214,17 +214,17 @@ public class ModuleTesterTest {
                 "        returnVal = input * input\n" +
                 "        #END calc_square\n";
         File moduleDir = new File(moduleName);
-        File implFile = new File(moduleDir, "lib/" + moduleName + "/" + 
+        File implFile = new File(moduleDir, "lib/" + moduleName + "/" +
                 moduleName + "Impl.py");
         ModuleInitializer initer = new ModuleInitializer(moduleName, token.getUserName(), lang, false);
         initer.initialize(false);
         File specFile = new File(moduleDir, moduleName + ".spec");
-        String specText = FileUtils.readFileToString(specFile).replace("};", 
+        String specText = FileUtils.readFileToString(specFile).replace("};",
                 "funcdef run_local(int input) returns (int) authentication required;\n" +
                 "funcdef calc_square(int input) returns (int) authentication required;\n" +
                 "};");
         File testFile = new File(moduleDir, "test/" + moduleName + "_server_test.py");
-        String testCode = FileUtils.readFileToString(testFile).replace("    def test_your_method(self):", 
+        String testCode = FileUtils.readFileToString(testFile).replace("    def test_your_method(self):",
                 "    def test_your_method(self):\n" +
                 "        self.assertEqual(25, self.getImpl().run_local(self.getContext(), 5)[0])"
         );

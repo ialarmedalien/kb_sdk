@@ -24,24 +24,27 @@ public class ModuleInitializer {
 	private String language;
 	private boolean verbose;
 	private File dir;
-	
-	private static String[] subdirs = {"data",
+
+	private static String[] subdirs = { "data",
 										"scripts",
 										"lib",
 										"test",
 										"ui",
 										"ui/narrative",
-										"ui/narrative/methods"};
-	
+										"ui/narrative/methods",
+										".github",
+										".github/workflows"
+										};
+
 	public ModuleInitializer(String moduleName, String userName, boolean verbose) {
 		this(moduleName, userName, DEFAULT_LANGUAGE, verbose);
 	}
-	
+
 	public ModuleInitializer(String moduleName, String userName, String language, boolean verbose) {
 	    this(moduleName, userName, language, verbose, null);
 	}
-	
-    public ModuleInitializer(String moduleName, String userName, String language, 
+
+    public ModuleInitializer(String moduleName, String userName, String language,
             boolean verbose, File dir) {
 		this.moduleName = moduleName;
 		this.userName = userName;
@@ -49,9 +52,9 @@ public class ModuleInitializer {
 		this.verbose = verbose;
 		this.dir = dir;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param example
 	 * @throws IOException
 	 */
@@ -59,10 +62,10 @@ public class ModuleInitializer {
 		if (this.moduleName == null) {
 			throw new RuntimeException("Unable to create a null directory!");
 		}
-        String moduleDir = dir == null ? this.moduleName : 
+        String moduleDir = dir == null ? this.moduleName :
             new File(dir, this.moduleName).getPath();
 		this.language = qualifyLanguage(this.language);
-		
+
 		if (this.verbose) {
 			String msg = "Initializing module \"" + this.moduleName + "\"";
 			if (example)
@@ -79,10 +82,10 @@ public class ModuleInitializer {
 			subdirList.add("ui/narrative/methods/run_" + this.moduleName);
 			subdirList.add("ui/narrative/methods/run_" + this.moduleName + "/img");
 		}
-	
+
 		// 1. build dir with moduleName
 		initDirectory(Paths.get(moduleDir), true);
-		
+
 		// 2. build skeleton subdirs
 		for (String dir : subdirList) {
 			initDirectory(Paths.get(moduleDir, dir), true);
@@ -93,7 +96,7 @@ public class ModuleInitializer {
 		 *
 		 * Set up the context - the set of variables used to flesh out the templates */
 		String specFile = Paths.get(this.moduleName + ".spec").toString();
-		
+
 		Map<String, Object> moduleContext = new HashMap<String, Object>();
 		moduleContext.put("module_name", this.moduleName);
 		moduleContext.put("user_name", this.userName);
@@ -129,7 +132,8 @@ public class ModuleInitializer {
         templateFiles.put("module_run_tests", Paths.get(moduleDir, "test_local", "run_tests.sh"));
         templateFiles.put("module_run_bash", Paths.get(moduleDir, "test_local", "run_bash.sh"));
         templateFiles.put("module_run_docker", Paths.get(moduleDir, "test_local", "run_docker.sh"));
-		
+        templateFiles.put("github_workflows", Paths.get(moduleDir, ".github", "workflows", "run_tests.yml"));
+
 		switch (language) {
 		case "java":
             templateFiles.put("module_build_xml", Paths.get(moduleDir, "build.xml"));
@@ -153,13 +157,15 @@ public class ModuleInitializer {
             templateFiles.put("module_tox", Paths.get(moduleDir, "tox.ini"));
             break;
         case "perl":
-            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.pl"));
+            templateFiles.put("module_cpanfile", Paths.get(moduleDir, "cpanfile"));
+            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.t"));
+            templateFiles.put("module_test_perl_compile", Paths.get(moduleDir, "test", "00_compile.t"));
             break;
         case "r":
             templateFiles.put("module_test_r_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.r"));
             break;
 		}
-		
+
 		if (example && this.language.equals("r")) {
 			templateFiles.put("module_method_spec_json", Paths.get(moduleDir, "ui", "narrative", "methods", "count_contigs_in_set", "spec.json"));
 			templateFiles.put("module_method_spec_yaml", Paths.get(moduleDir, "ui", "narrative", "methods", "count_contigs_in_set", "display.yaml"));
@@ -171,7 +177,6 @@ public class ModuleInitializer {
         switch(this.language) {
             // Perl just needs an impl file and a start server script
             case "perl":
-                //templateFiles.put("module_start_perl_server", Paths.get(moduleDir, "scripts", "start_server.sh"));
                 // start_server script is now made in Makefile
                 templateFiles.put("module_perl_impl", Paths.get(moduleDir, "lib", this.moduleName, this.moduleName + "Impl.pm"));
                 break;
@@ -180,7 +185,6 @@ public class ModuleInitializer {
                 initDirectory(Paths.get(moduleDir, "lib", this.moduleName), false);
                 initFile(Paths.get(moduleDir, "lib", this.moduleName, "__init__.py"), false);
                 templateFiles.put("module_python_impl", Paths.get(moduleDir, "lib", this.moduleName, this.moduleName + "Impl.py"));
-                //templateFiles.put("module_start_python_server", Paths.get(moduleDir, "scripts", "start_server.sh"));
                 // start_server script is now made in Makefile
                 break;
             case "r":
@@ -194,7 +198,6 @@ public class ModuleInitializer {
                 File serverJavaFile = new File(srcDir, modulePackage.replace('.', '/') + "/" + javaModuleName + "Server.java");
                 fillTemplate(moduleContext, "module_java_impl", serverJavaFile.toPath());
                 JavaTypeGenerator.processSpec(new File(moduleDir, specFile), srcDir, javaPackageParent, true, null, null, null);
-                //templateFiles.put("module_start_java_server", Paths.get(moduleDir, "scripts", "start_server.sh"));
                 // start_server script is now made in Makefile
                 break;
             default:
@@ -204,43 +207,43 @@ public class ModuleInitializer {
 		for (String templateName : templateFiles.keySet()) {
 			fillTemplate(moduleContext, templateName, templateFiles.get(templateName));
 		}
-		
+
 		if (example) {
 			// Generated examples require some other SDK dependencies
             new ClientInstaller(new File(moduleDir), false).install(
                     this.language,
-                    true, // async clients
-                    false, // core or sync clients
-                    false, // dynamic client
-                    null, //tagVer
+                    true,   // async clients
+                    false,  // core or sync clients
+                    false,  // dynamic client
+                    null,   // tagVer
                     this.verbose,
                     "AssemblyUtil",
                     null,
-                    null // clientName
+                    null    // clientName
             );
 		}
 		// Let's install fresh workspace client in any cases (we need it at least in tests):
 		new ClientInstaller(new File(moduleDir), false).install(
                 this.language,
-                false, // async clients
-                true, // core or sync clients
-                false, // dynamic client
-                null, //tagVer
+                false,  // async clients
+                true,   // core or sync clients
+                false,  // dynamic client
+                null,   // tagVer
                 this.verbose,
                 "https://raw.githubusercontent.com/kbase/workspace_deluxe/master/workspace.spec",
                 null,
-                null // clientName
+                null    // clientName
             );
         new ClientInstaller(new File(moduleDir), false).install(
                 this.language,
-                true, // async clients
-                false, // core or sync clients
-                false, // dynamic client
-                null, //tagVer
+                true,   // async clients
+                false,  // core or sync clients
+                false,  // dynamic client
+                null,   // tagVer
                 this.verbose,
                 "KBaseReport",
                 null,
-                null // clientName
+                null    // clientName
         );
 
 		System.out.println("Done! Your module is available in the " + moduleDir + " directory.");
@@ -250,9 +253,9 @@ public class ModuleInitializer {
 		System.out.println("  kb-sdk test   (will require setting test user account credentials in test_local/test.cfg)");
 		System.out.println();
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param dirPath
 	 * @throws IOException
 	 */
@@ -266,7 +269,7 @@ public class ModuleInitializer {
 			throw new IOException("Error while creating module - " + dirPath + " already exists!");
 		}
 	}
-	
+
 	private void initFile(Path filePath, boolean failOnExist) throws IOException {
 		if (this.verbose) System.out.println("Building empty file \"" + filePath.toString() + "\"");
 		boolean done = filePath.toFile().createNewFile();
@@ -274,7 +277,7 @@ public class ModuleInitializer {
 			throw new IOException("Unable to create file \"" + filePath.toString() + "\" - file already exists!");
 	}
 	/**
-	 * 
+	 *
 	 * @param context
 	 * @param templateName
 	 * @param outfile
@@ -285,30 +288,30 @@ public class ModuleInitializer {
 		initDirectory(outfilePath.getParent(), false);
 		TemplateFormatter.formatTemplate(templateName, context, outfilePath.toFile());
 	}
-	
+
 	/**
-	 * Takes a language string and returns a "qualified" form. E.g. "perl", "Perl", "pl", ".pl", should all 
+	 * Takes a language string and returns a "qualified" form. E.g. "perl", "Perl", "pl", ".pl", should all
 	 * return "perl", "Python", "python", ".py", and "py" should all return Python, etc.
-	 * 
+	 *
 	 * Right now, we support Perl, Python and Java for implementation languages
 	 * @param language
 	 * @return
 	 */
 	public static String qualifyLanguage(String language) {
 		String lang = language.toLowerCase();
-		
+
 		String[] perlNames = {"perl", ".pl", "pl"};
 		if (Arrays.asList(perlNames).contains(lang))
 			return "perl";
-		
+
 		String[] pythonNames = {"python", ".py", "py"};
 		if (Arrays.asList(pythonNames).contains(lang))
 			return "python";
-		
+
 		String[] javaNames = {"java", ".java"};
 		if (Arrays.asList(javaNames).contains(lang))
 			return "java";
-		
+
 		String[] rNames = {"r", ".r"};
 		if (Arrays.asList(rNames).contains(lang)) {
 			System.out.println(
@@ -317,7 +320,7 @@ public class ModuleInitializer {
 					"************************************************************************");
 			return "r";
 		}
-		
+
 		// If we get here, then we don't recognize it! throw a runtime exception
 		throw new RuntimeException("Unrecognized language: " + language + "\n\tWe currently only support Python, Perl, and Java.");
 	}

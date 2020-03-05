@@ -31,7 +31,7 @@ import us.kbase.mobu.util.TextUtils;
 import us.kbase.mobu.validator.ModuleValidator;
 
 public class ModuleBuilder {
-	
+
     private static final String defaultParentPackage = "us.kbase";
     private static final String MODULE_BUILDER_SH_NAME = "kb-sdk";
 
@@ -45,21 +45,23 @@ public class ModuleBuilder {
     private static final String INSTALL_COMMAND  = "install";
     private static final String RUN_COMMAND      = "run";
     //private static final String SUBMIT_COMMAND   = "submit";
-    
+
     public static final String GLOBAL_SDK_HOME_ENV_VAR = "KB_SDK_HOME";
     public static final String DEFAULT_METHOD_STORE_URL = "https://appdev.kbase.us/services/narrative_method_store/rpc";
-    
-    public static final String VERSION = "1.2.0";
-    
-    
+
+    public static final String VERSION = "1.2.0-alien";
+
     public static void main(String[] args) throws Exception {
-    	
+
+        System.out.println("Starting kb-sdk!");
+        printVersion();
+
     	// setup the basic CLI argument parser with global -h and --help commands
     	GlobalArgs gArgs = new GlobalArgs();
     	JCommander jc = new JCommander(gArgs);
     	jc.setProgramName(MODULE_BUILDER_SH_NAME);
 
-    	
+
     	// add the 'init' command
     	InitCommandArgs initArgs = new InitCommandArgs();
     	jc.addCommand(INIT_COMMAND, initArgs);
@@ -67,7 +69,7 @@ public class ModuleBuilder {
     	// add the 'validate' command
     	ValidateCommandArgs validateArgs = new ValidateCommandArgs();
     	jc.addCommand(VALIDATE_COMMAND, validateArgs);
-    	
+
     	// add the 'compile' command
     	CompileCommandArgs compileArgs = new CompileCommandArgs();
     	jc.addCommand(COMPILE_COMMAND, compileArgs);
@@ -91,7 +93,7 @@ public class ModuleBuilder {
         // add the 'install' command
         InstallCommandArgs installArgs = new InstallCommandArgs();
         jc.addCommand(INSTALL_COMMAND, installArgs);
-        
+
         // add the 'run' command
         RunCommandArgs runArgs = new RunCommandArgs();
         jc.addCommand(RUN_COMMAND, runArgs);
@@ -103,24 +105,24 @@ public class ModuleBuilder {
     		showError("Command Line Argument Error", e.getMessage());
     		System.exit(1);
     	}
-    	
+
     	// if the help flag is set, then show some help and exit
     	if(gArgs.help) {
     		showBriefHelp(jc, System.out);
     		return;
     	}
-    	
+
 	    // no command entered, just print brief info and exit
 	    if(jc.getParsedCommand()==null) {
 	    	showBriefHelp(jc, System.out);
 	    	return;
 	    }
-	    
+
 	    // if we get here, we have a valid command, so process it and do stuff
 	    int returnCode = 0;
 	    if(jc.getParsedCommand().equals(HELP_COMMAND)) {
 		    showCommandUsage(jc,help,System.out);
-		    
+
 	    } else if(jc.getParsedCommand().equals(INIT_COMMAND)) {
 	    	returnCode = runInitCommand(initArgs,jc);
 	    } else if(jc.getParsedCommand().equals(VALIDATE_COMMAND)) {
@@ -138,14 +140,14 @@ public class ModuleBuilder {
 	    } else if (jc.getParsedCommand().equals(RUN_COMMAND)) {
 	        returnCode = runRunCommand(runArgs, jc);
 	    }
-	    
+
 	    if(returnCode!=0) {
 	    	System.exit(returnCode);
 	    }
     }
-    
+
     private static int runValidateCommand(ValidateCommandArgs validateArgs, JCommander jc) {
-    	// initialize 
+    	// initialize
     	if(validateArgs.modules==null) {
     		validateArgs.modules = new ArrayList<String>();
     	}
@@ -168,7 +170,7 @@ public class ModuleBuilder {
      * Runs the module initialization command - this creates a new module in the relative directory name given.
      * There's only a couple of possible arguments here in the initArgs:
      * userName (required) - the user's Github user name, used to set up some optional fields
-     * moduleNames (required) - this catchall represents the module's name. Any whitespace (e.g. token breaks) 
+     * moduleNames (required) - this catchall represents the module's name. Any whitespace (e.g. token breaks)
      * are replaced with underscores. So if a user runs:
      *   kb-sdk init my new module
      * they get a module called "my_new_module" in a directory of the same name.
@@ -184,12 +186,12 @@ public class ModuleBuilder {
 			return 1;
 		}
 		String moduleName = StringUtils.join(initArgs.moduleNames, "_");
-		
+
 		// Get username if available
 		String userName = null;
 		if (initArgs.userName != null)
 			userName = initArgs.userName;
-		
+
 		// Get chosen language
 		String language = ModuleInitializer.DEFAULT_LANGUAGE;
 		if (initArgs.language != null) {
@@ -231,13 +233,13 @@ public class ModuleBuilder {
             }
             return 1;
 		}
-    	
+
         if (a.clAsyncVer != null && a.dynservVer != null) {
             showError("Bad arguments",
                     "clasyncver and dynserver cannot both be specified");
             return 1;
         }
-    	
+
     	// Step 2: check or create the output directory
     	File outDir = a.outDir == null ? new File(".") : new File(a.outDir);
         try {
@@ -248,7 +250,7 @@ public class ModuleBuilder {
 		}
         if (!outDir.exists())
             outDir.mkdirs();
-        
+
     	// Step 3: validate the URL option if it is defined
         if (a.url != null) {
             try {
@@ -258,7 +260,7 @@ public class ModuleBuilder {
                 return 1;
             }
         }
-        
+
         // Step 4: info collection for status method
         File moduleDir = specFile.getAbsoluteFile().getParentFile();
         String semanticVersion = null;
@@ -290,13 +292,13 @@ public class ModuleBuilder {
             }
         }
         try {
-            RunCompileCommand.generate(specFile, a.url, a.jsClientSide, a.jsClientName, a.perlClientSide, 
-                    a.perlClientName, a.perlServerSide, a.perlServerName, a.perlImplName, 
-                    a.perlPsgiName, a.perlEnableRetries, a.pyClientSide, a.pyClientName, 
-                    a.pyServerSide, a.pyServerName, a.pyImplName, a.javaClientSide, 
-                    a.javaServerSide, a.javaPackageParent, a.javaSrcDir, a.javaLibDir, 
-                    a.javaBuildXml, a.javaGwtPackage, a.rClientSide, a.rClientName, 
-                    a.rServerSide, a.rServerName, a.rImplName, outDir, a.jsonSchema, 
+            RunCompileCommand.generate(specFile, a.url, a.jsClientSide, a.jsClientName, a.perlClientSide,
+                    a.perlClientName, a.perlServerSide, a.perlServerName, a.perlImplName,
+                    a.perlPsgiName, a.perlEnableRetries, a.pyClientSide, a.pyClientName,
+                    a.pyServerSide, a.pyServerName, a.pyImplName, a.javaClientSide,
+                    a.javaServerSide, a.javaPackageParent, a.javaSrcDir, a.javaLibDir,
+                    a.javaBuildXml, a.javaGwtPackage, a.rClientSide, a.rClientName,
+                    a.rServerSide, a.rServerName, a.rImplName, outDir, a.jsonSchema,
                     a.makefile, a.clAsyncVer, a.dynservVer, a.html,
                     semanticVersion, gitUrl, gitCommitHash);
         } catch (Throwable e) {
@@ -316,7 +318,7 @@ public class ModuleBuilder {
 	    ProcessHelper.cmd(cmd).exec(workDir, null, pw);
 	    return sw.toString().trim();
 	}
-	
+
     static List<File> convertToFiles(List<String> filenames) throws IOException {
     	List <File> files = new ArrayList<File>(filenames.size());
     	for(String filename: filenames) {
@@ -328,12 +330,12 @@ public class ModuleBuilder {
     	}
 		return files;
     }
-    
+
     public static class GlobalArgs {
     	@Parameter(names = {"-h","--help"}, help = true, description="Display help and full usage information.")
     	boolean help;
     }
-    
+
     /**
      * Runs the module test command - this runs tests in local docker container.
      * @param testArgs
@@ -347,7 +349,7 @@ public class ModuleBuilder {
 
         try {
             ModuleTester tester = new ModuleTester();
-            returnCode = tester.runTests(testArgs.methodStoreUrl, testArgs.skipValidation, testArgs.allowSyncMethods);
+            returnCode = tester.runTests(testArgs.methodStoreUrl, testArgs.skipValidation, testArgs.allowSyncMethods, testArgs.passthroughArgs);
         }
         catch (Exception e) {
             if (testArgs.verbose)
@@ -375,7 +377,7 @@ public class ModuleBuilder {
         } catch (Exception ignore) {}
         return gitCommit;
     }
-    
+
     private static int runVersionCommand(VersionCommandArgs testArgs, JCommander jc) {
         printVersion();
         return 0;
@@ -398,14 +400,14 @@ public class ModuleBuilder {
 
     private static int runInstallCommand(InstallCommandArgs installArgs, JCommander jc) {
         if (installArgs.moduleName == null || installArgs.moduleName.size() != 1) {
-            ModuleBuilder.showError("Command Line Argument Error", 
+            ModuleBuilder.showError("Command Line Argument Error",
                     "One and only one module name should be provided");
             return 1;
         }
         try {
             return new ClientInstaller().install(installArgs.lang, installArgs.async,
-                    installArgs.core || installArgs.sync, installArgs.dynamic, 
-                    installArgs.tagVer, installArgs.verbose, installArgs.moduleName.get(0), 
+                    installArgs.core || installArgs.sync, installArgs.dynamic,
+                    installArgs.tagVer, installArgs.verbose, installArgs.moduleName.get(0),
                     null, installArgs.clientName);
         } catch (Exception e) {
             if (installArgs.verbose)
@@ -417,7 +419,7 @@ public class ModuleBuilder {
 
     private static int runRunCommand(RunCommandArgs runArgs, JCommander jc) {
         if (runArgs.methodName == null || runArgs.methodName.size() != 1) {
-            ModuleBuilder.showError("Command Line Argument Error", 
+            ModuleBuilder.showError("Command Line Argument Error",
                     "One and only one method name should be provided");
             return 1;
         }
@@ -425,9 +427,9 @@ public class ModuleBuilder {
             if (runArgs.inputFile == null && runArgs.inputJson == null && !runArgs.stdin)
                 throw new IllegalStateException("No one input method is used " +
                 		"(should be one of '-i', '-j' or '-s')");
-            return new ModuleRunner(runArgs.sdkHome).run(runArgs.methodName.get(0), 
-                    runArgs.inputFile, runArgs.stdin, runArgs.inputJson, runArgs.output, 
-                    runArgs.tagVer, runArgs.verbose, runArgs.keepTempFiles, runArgs.provRefs, 
+            return new ModuleRunner(runArgs.sdkHome).run(runArgs.methodName.get(0),
+                    runArgs.inputFile, runArgs.stdin, runArgs.inputJson, runArgs.output,
+                    runArgs.tagVer, runArgs.verbose, runArgs.keepTempFiles, runArgs.provRefs,
                     runArgs.mountPoints);
         } catch (Exception e) {
             if (runArgs.verbose)
@@ -441,44 +443,44 @@ public class ModuleBuilder {
     private static class ValidateCommandArgs {
     	@Parameter(names={"-v","--verbose"}, description="Show verbose output")
         boolean verbose = false;
-    	
+
     	@Parameter(names={"-m", "--method_store"}, description="Narrative Method Store URL " +
     			"(default is " + DEFAULT_METHOD_STORE_URL + ")")
     	String methodStoreUrl = DEFAULT_METHOD_STORE_URL;
-    	
+
     	@Parameter(names={"-a","--allow_sync_method"}, description="Allow synchonous methods " +
     			"(advanced option, default is false)")
         boolean allowSyncMethods = false;
-    	
+
     	@Parameter(description="[path to the module directories]")
         List<String> modules;
     }
-    
+
     @Parameters(commandDescription = "Initialize a module in the current directory.")
     private static class InitCommandArgs {
     	@Parameter(names={"-v","--verbose"}, description="Show verbose output")
     	boolean verbose = false;
-    	
-    	@Parameter(required=true, names={"-u","--user"}, 
+
+    	@Parameter(required=true, names={"-u","--user"},
     			description="(Required) provide a username to serve as the owner of this module")
     	String userName;
-    	
-    	@Parameter(names={"-e","--example"}, 
+
+    	@Parameter(names={"-e","--example"},
     			description="Include a fully featured example in your module. " +
     			"This generates an example set of code and configurations that can " +
     			"be used to demonstrate a very simple example.")
     	boolean example = false;
-    	
-    	@Parameter(names={"-l","--language"}, description="Choose a language for developing " + 
-    			" code in your module. You can currently choose from Python, Perl, and Java " + 
+
+    	@Parameter(names={"-l","--language"}, description="Choose a language for developing " +
+    			" code in your module. You can currently choose from Python, Perl, and Java " +
     			"(default=Python)")
     	String language = ModuleInitializer.DEFAULT_LANGUAGE;
-    	
+
     	@Parameter(required=true, description="<module name>")
     	List<String> moduleNames;
     }
-    
-    
+
+
     @Parameters(commandDescription = "Get help and usage information.")
     private static class HelpCommandArgs {
     	@Parameter(description="Show usage for this command")
@@ -486,14 +488,14 @@ public class ModuleBuilder {
     	@Parameter(names={"-a","--all"}, description="Show usage for all commands")
         boolean showAll = false;
     }
-    
+
     @Parameters(commandDescription = "Compile a KIDL file into client and server code")
     public static class CompileCommandArgs {
-     
+
     	@Parameter(names="--out",description="Set the output folder name (default is the current directory)")
     			//, metaVar="<out-dir>")
         String outDir = null;
-        
+
     	@Parameter(names="--js", description="Generate a JavaScript client with a standard default name")
         boolean jsClientSide = false;
 
@@ -561,12 +563,12 @@ public class ModuleBuilder {
     	@Parameter(names="--java", description="Generate Java client code in the directory set by --javasrc")
         boolean javaClientSide = false;
 
-    	@Parameter(names="--javasrc",description="Set the output folder for generated Java code")//, metaVar = 
+    	@Parameter(names="--javasrc",description="Set the output folder for generated Java code")//, metaVar =
         		//"<java-src-dir>")
         String javaSrcDir = "src";
 
     	@Parameter(names="--javalib",description="Set the output folder for jar files (if defined then --java will be " +
-        		"treated as true automatically)")//, metaVar = 
+        		"treated as true automatically)")//, metaVar =
         		//"<java-lib-dir>")
         String javaLibDir = null;
 
@@ -574,15 +576,15 @@ public class ModuleBuilder {
         String url = null;
 
     	@Parameter(names="--javapackage",description="Set the Java package for generated code (module subpackages are " +
-        		"created in this package), default value is " + defaultParentPackage)//, 
-        		//metaVar = "<java-package>")      
+        		"created in this package), default value is " + defaultParentPackage)//,
+        		//metaVar = "<java-package>")
         String javaPackageParent = defaultParentPackage;
 
     	@Parameter(names="--javasrv", description="Generate Java server code in the directory set by --javasrc")
         boolean javaServerSide = false;
 
     	@Parameter(names="--javagwt",description="Generate a GWT client Java package (useful if you need " +
-        		"copies of generated classes for GWT clients)")//, metaVar="<java-gwt-pckg>")     
+        		"copies of generated classes for GWT clients)")//, metaVar="<java-gwt-pckg>")
         String javaGwtPackage = null;
 
         @Parameter(names="--r", description="DEPRECATED Generate a R client with a standard default name")
@@ -613,17 +615,17 @@ public class ModuleBuilder {
     	@Parameter(names="--jsonschema",description="Generate JSON schema documents for the types in the output folder specified.")//, metaVar="<json-schema>")
         String jsonSchema = null;
 
-    	
+
     	@Parameter(names="--javabuildxml",description="Will generate build.xml template for Ant")
         boolean javaBuildXml;
-    	
+
     	@Parameter(names="--makefile",description="Will generate makefile templates for servers and/or java client")
         boolean makefile = false;
 
         @Parameter(names="--clasyncver",description="Will set in client code version of service for asyncronous calls " +
         		"(it could be git commit hash of version registered in catalog or one of version tags: dev/beta/release)")
         String clAsyncVer = null;
-        
+
         @Parameter(names="--dynservver", description="Clients will be built " +
                 "for use with KBase dynamic services (e.g. with URL lookup " +
                 "via the Service Wizard) with the specified version " +
@@ -631,11 +633,11 @@ public class ModuleBuilder {
                 "clasyncver may not be specified if " +
                 "dynservver is specified.")
         String dynservVer = null;
-        
+
         @Parameter(names="--html", description="Generate HTML version(s) of " +
                "the input spec file(s)")
         boolean html = false;
-        
+
         @Parameter(names={"-v", "--verbose"}, description="Print full stack " +
                 "trace on a compile failure")
         boolean verbose = false;
@@ -643,28 +645,32 @@ public class ModuleBuilder {
         @Parameter(required=true, description="<KIDL spec file>")
         List <String> specFileNames;
     }
-    
+
     @Parameters(commandDescription = "Test a module with local Docker.")
     private static class TestCommandArgs {
         @Parameter(names={"-m", "--method_store"}, description="Narrative Method Store URL used in validation " +
                 "(default is " + DEFAULT_METHOD_STORE_URL + ")")
         String methodStoreUrl = DEFAULT_METHOD_STORE_URL;
-        
+
         @Parameter(names={"-s", "--skip_validation"}, description="Will skip validation step (default is false)")
         boolean skipValidation = false;
-        
+
         @Parameter(names={"-a","--allow_sync_method"}, description="Allow synchonous methods " +
                 "(advanced option, part of validation settings, default value is false)")
         boolean allowSyncMethods = false;
 
+        @Parameter(names={"-p", "--passthrough_args"}, description="Arguments to pass through " +
+                "to the test method", variableArity = true)
+        List<String> passthroughArgs = new ArrayList<>();
+
         @Parameter(names={"-v","--verbose"}, description="Print more details including error stack traces")
         boolean verbose = false;
     }
-    
+
     @Parameters(commandDescription = "Print current version of kb-sdk.")
     private static class VersionCommandArgs {
     }
-    
+
     @Parameters(commandDescription = "Rename a module name.")
     private static class RenameCommandArgs {
         @Parameter(names={"-v","--verbose"}, description="Print more details including error stack traces")
@@ -679,7 +685,7 @@ public class ModuleBuilder {
         @Parameter(names={"-l", "--language"}, description="Language of generated client code " +
                 "(default is one defined in kbase.yml)")
         String lang;
-        
+
         @Parameter(names={"-a", "--async"}, description="Force generation of asynchronous calls " +
         		"(default is chosen based on information registered in catalog)")
         boolean async = false;
@@ -701,7 +707,7 @@ public class ModuleBuilder {
 
         @Parameter(names={"-v","--verbose"}, description="Print more details including error stack traces")
         boolean verbose = false;
-        
+
         @Parameter(names={"-n","--clientname"}, description="Optional parameter defining custom client name " +
                 "(default is module name)")
         String clientName = null;
@@ -739,7 +745,7 @@ public class ModuleBuilder {
         @Parameter(names={"-k","--keep-tmp"}, description="Keep temporary files/folders at the " +
         		"end (default value is false)")
         boolean keepTempFiles = false;
-        
+
         @Parameter(names={"-h","--sdk-home"}, description="Home folder of kb-sdk where sdk.cfg " +
         		"file and run_local folder are expected to be found or created if absent " +
                 "(default path is loaded from 'KB_SDK_HOME' system environment variable)")
@@ -779,7 +785,7 @@ public class ModuleBuilder {
     	out.println("    For full usage information, see \"kb-sdk help -a\".");
     	out.println("");
     };
-    
+
     private static void showCommandUsage(JCommander jc, HelpCommandArgs helpArgs, PrintStream out) {
     	if(helpArgs.showAll) {
     		showFullUsage(jc, out);
@@ -802,15 +808,15 @@ public class ModuleBuilder {
     		showBriefHelp(jc, out);
     	}
     };
-    
+
     private static void showFullUsage(JCommander jc, PrintStream out) {
     	String indent = "";
 		StringBuilder usage = new StringBuilder();
 		jc.usage(usage,indent);
 		out.print(usage.toString());
     };
-    
-    
+
+
     private static void showError(String error, String message, String extraHelp) {
 		System.err.println(error + ": " + message+"\n");
 		if(!extraHelp.isEmpty())
@@ -819,7 +825,7 @@ public class ModuleBuilder {
 		System.err.println("    "+MODULE_BUILDER_SH_NAME+" "+HELP_COMMAND);
 		System.err.println("");
     }
-    
+
     private static void showError(String error, String message) {
     	showError(error,message,"");
     }

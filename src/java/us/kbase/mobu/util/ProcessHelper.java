@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import org.apache.commons.lang.StringUtils;
 /**
  * User: Roman
  * Date: 08.01.12
@@ -61,7 +61,7 @@ public class ProcessHelper {
     }
 
     public static ProcessHelper exec(CommandHolder cmd, File workDir, BufferedReader input, boolean saveOutput, boolean saveErrors, boolean waitFor) throws IOException {
-        return new ProcessHelper(cmd, workDir, saveOutput ? OutType.StringOut : OutType.SystemOut, 
+        return new ProcessHelper(cmd, workDir, saveOutput ? OutType.StringOut : OutType.SystemOut,
                 saveErrors ? OutType.StringErr : OutType.SystemErr, input, null, null, waitFor);
     }
 
@@ -75,8 +75,15 @@ public class ProcessHelper {
             outPw = output;
         if (error != null)
             errPw = error;
-        process = cmd.cmdLine != null ? Runtime.getRuntime().exec(cmd.cmdLine, null, workDir) :
-                Runtime.getRuntime().exec(cmd.cmdParts, null, workDir);
+        if (cmd.cmdLine != null) {
+            System.out.println("command: " + cmd.cmdLine );
+        }
+        else {
+            System.out.println("command: " + StringUtils.join(cmd.cmdParts, " ") );
+        }
+        process = cmd.cmdLine != null
+            ? Runtime.getRuntime().exec(cmd.cmdLine, null, workDir)
+            : Runtime.getRuntime().exec(cmd.cmdParts, null, workDir);
         Thread outTh = readInNewThread(process.getInputStream(), outType);
         Thread errTh = readInNewThread(process.getErrorStream(), errType);
         if (input != null) {
@@ -110,7 +117,7 @@ public class ProcessHelper {
     public Process getProcess() {
 		return process;
 	}
-    
+
     private Thread readInNewThread(final InputStream is, final OutType outType) {
         Thread ret = new Thread(new Runnable() {
             public void run() {
@@ -192,7 +199,7 @@ public class ProcessHelper {
         	waitFor = false;
         	return this;
         }
-        
+
         public ProcessHelper exec(File workDir) throws IOException {
             return ProcessHelper.exec(this, workDir, waitFor);
         }

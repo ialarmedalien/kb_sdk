@@ -45,4 +45,3 @@ script:
   - make
   - kb-sdk validate
 
-

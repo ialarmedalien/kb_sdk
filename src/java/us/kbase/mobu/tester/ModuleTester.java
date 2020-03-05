@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -53,7 +54,7 @@ public class ModuleTester {
     public ModuleTester() throws Exception {
         this(null);
     }
-    
+
     public ModuleTester(File dir) throws Exception {
         moduleDir = dir == null ? DirUtils.findModuleDir() : DirUtils.findModuleDir(dir);
         String kbaseYml = TextUtils.readFileText(new File(moduleDir, "kbase.yml"));
@@ -70,7 +71,7 @@ public class ModuleTester {
         ModuleInitializer.qualifyLanguage((String) kbaseYmlConfig.get("service-language"));
         moduleContext.put("os_name", System.getProperty("os.name"));
     }
-    
+
     private static void checkIgnoreLine(File f, String line) throws IOException {
         List<String> lines = new ArrayList<String>();
         if (f.exists())
@@ -82,13 +83,13 @@ public class ModuleTester {
             FileUtils.writeLines(f, lines);
         }
     }
-    
-    public int runTests(String methodStoreUrl, boolean skipValidation, boolean allowSyncMethods)
+
+    public int runTests(String methodStoreUrl, boolean skipValidation, boolean allowSyncMethods, List<String> passthroughArgs)
             throws Exception {
         if (skipValidation) {
             System.out.println("Validation step is skipped");
         } else {
-            ModuleValidator mv = new ModuleValidator(Arrays.asList(moduleDir.getCanonicalPath()), 
+            ModuleValidator mv = new ModuleValidator(Arrays.asList(moduleDir.getCanonicalPath()),
                     false, methodStoreUrl, allowSyncMethods);
             int returnCode = mv.validateAll();
             if (returnCode!=0) {
@@ -114,7 +115,7 @@ public class ModuleTester {
         if (kbaseYmlConfig.get("data-version") != null) {
             File refDataDir = new File(tlDir, "refdata");
             if (!refDataDir.exists()) {
-                TemplateFormatter.formatTemplate("module_run_tests", moduleContext, 
+                TemplateFormatter.formatTemplate("module_run_tests", moduleContext,
                         runTestsSh);
                 refDataDir.mkdir();
             }
@@ -138,10 +139,10 @@ public class ModuleTester {
         } finally {
             is.close();
         }
-        
+
         ConfigLoader cfgLoader = new ConfigLoader(props, true, "test_local/test.cfg", true);
-        
-        
+
+
         File workDir = new File(tlDir, "workdir");
         workDir.mkdir();
         File tokenFile = new File(workDir, "token");
@@ -175,7 +176,7 @@ public class ModuleTester {
         String callbackNetworksText = props.getProperty("callback_networks");
         if (callbackNetworksText != null) {
             callbackNetworks = callbackNetworksText.trim().split("\\s*,\\s*");
-            System.out.println("Custom network instarface list is defined: " + 
+            System.out.println("Custom network instarface list is defined: " +
                     Arrays.asList(callbackNetworks));
         }
         URL callbackUrl = CallbackServer.getCallbackUrl(callbackPort, callbackNetworks);
@@ -185,7 +186,7 @@ public class ModuleTester {
                 JsonServerSyslog.setStaticUseSyslog(false);
                 JsonServerSyslog.setStaticMlogFile("callback.log");
             }
-            CallbackServerConfig cfg = cfgLoader.buildCallbackServerConfig(callbackUrl, 
+            CallbackServerConfig cfg = cfgLoader.buildCallbackServerConfig(callbackUrl,
                     tlDir.toPath(), new LineLogger() {
                 @Override
                 public void logNextLine(String line, boolean isError) {
@@ -224,11 +225,20 @@ public class ModuleTester {
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
         try {
-            System.out.println();
             ProcessHelper.cmd("chmod", "+x", runTestsSh.getCanonicalPath()).exec(tlDir);
-            int exitCode = ProcessHelper.cmd("bash", DirUtils.getFilePath(runTestsSh),
-                    callbackUrl == null ? "http://fakecallbackurl" : 
-                        callbackUrl.toExternalForm()).exec(tlDir).getExitCode();
+            String extraArgs = passthroughArgs.size() > 0
+                ? StringUtils.join(passthroughArgs, " ")
+                : "";
+            System.out.println("Running the final command");
+            int exitCode = ProcessHelper.cmd(
+                "bash",
+                DirUtils.getFilePath(runTestsSh),
+                callbackUrl == null
+                    ? "http://fakecallbackurl"
+                    : callbackUrl.toExternalForm(),
+                "KB_SDK_TEST=1",
+                extraArgs
+            ).exec(tlDir).getExitCode();
             return exitCode;
         } finally {
             if (jettyServer != null) {
@@ -251,7 +261,7 @@ public class ModuleTester {
                 ProcessHelper.cmd("bash", runDockerPath, "rm", "-v", "-f", cntId).exec(tlDir);
             }
         }
-        String oldImageId = findImageIdByName(tlDir, imageName, runDockerSh);    
+        String oldImageId = findImageIdByName(tlDir, imageName, runDockerSh);
         System.out.println();
         System.out.println("Build Docker image");
         boolean ok = buildImage(moduleDir, imageName, runDockerSh);
@@ -267,7 +277,7 @@ public class ModuleTester {
         }
         return true;
     }
-    
+
     public static String findImageIdByName(File tlDir, String imageName,
             File runDockerSh) throws Exception {
         List<String> lines;
@@ -295,7 +305,7 @@ public class ModuleTester {
         String[] parts = line.split("\\s+");
         return parts;
     }
-    
+
     private static List<String> exec(File workDir, String... cmd) throws Exception {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -312,13 +322,13 @@ public class ModuleTester {
         br.close();
         return ret;
     }
-    
-    public static boolean buildImage(File repoDir, String targetImageName, 
+
+    public static boolean buildImage(File repoDir, String targetImageName,
             File runDockerSh) throws Exception {
         String scriptPath = DirUtils.getFilePath(runDockerSh);
         String repoPath = DirUtils.getFilePath(repoDir);
-        Process p = Runtime.getRuntime().exec(new String[] {"bash", 
-                scriptPath, "build", "--rm", "-t", 
+        Process p = Runtime.getRuntime().exec(new String[] {"bash",
+                scriptPath, "build", "--rm", "-t",
                 targetImageName, repoPath});
         List<Thread> workers = new ArrayList<Thread>();
         InputStream[] inputStreams = new InputStream[] {p.getInputStream(), p.getErrorStream()};
@@ -374,7 +384,7 @@ public class ModuleTester {
                 if (cntIdToDelete[0] != null) {
                     System.out.println("Cleaning up building container: " + cntIdToDelete[0]);
                     Thread.sleep(1000);
-                    ProcessHelper.cmd("bash", scriptPath, 
+                    ProcessHelper.cmd("bash", scriptPath,
                             "rm", "-v", "-f", cntIdToDelete[0]).exec(repoDir);
                 }
             } catch (Exception ex) {

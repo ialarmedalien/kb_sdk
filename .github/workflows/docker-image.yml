@@ -36,10 +36,10 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
+          ::add-path::$GITHUB_WORKSPACE/bin
           env
           make
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
+          ::add-path::$GITHUB_WORKSPACE/bin
           env
           kb-sdk help
           kb-sdk init --example -l python -u sychan MyContigFilter

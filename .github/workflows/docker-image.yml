@@ -37,20 +37,22 @@ jobs:
           env
           echo "::add-path::$GITHUB_WORKSPACE/bin"
       - name: Build with Ant
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
           make
           make sdkbase
           env
+      - name: checking kb-sdk functions
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+        run: |
           kb-sdk help
           kb-sdk init -l python -u sychan --example MyContigFilter
           kb-sdk init -l perl -u user --example PerlExample
           kb-sdk init -l perl -u user PerlBase
-          cd MyContigFilter
-          make
-          kb-sdk test
-          cd ../PerlExample
+          cd PerlExample
           kb-sdk test
           cd ../PerlBase
+          kb-sdk test
+          cd ../MyContigFilter
+          make
           kb-sdk test

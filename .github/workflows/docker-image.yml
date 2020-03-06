@@ -41,16 +41,13 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: | 
           make
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
+          make sdkbase
           env
           kb-sdk help
           kb-sdk init --example -l python -u sychan MyContigFilter
           kb-sdk init --example -l perl -u user PerlExample
           cd MyContigFilter
           make
-          kb-sdk validate
+          kb-sdk test
           cd ../PerlExample
           kb-sdk test
-
-
-#          make sdkbase

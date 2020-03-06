@@ -32,9 +32,10 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
+      - name: Add bin to $PATH
         run: |
-          echo "::add-path::$GITHUB_WORKSPACE/bin"
           env
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
       - name: Build with Ant
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}

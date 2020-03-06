@@ -38,6 +38,7 @@ jobs:
       - name: Build with Ant
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+        run: | 
           make
           echo "::add-path::$GITHUB_WORKSPACE/bin"
           env

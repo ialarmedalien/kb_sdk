@@ -35,11 +35,12 @@ jobs:
       - name: Build with Ant
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          PATH: $GITHUB_WORKSPACE/bin 
         run: |
-          ::add-path::$GITHUB_WORKSPACE/bin
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
           env
           make
-          ::add-path::$GITHUB_WORKSPACE/bin
+          echo "::add-path::$GITHUB_WORKSPACE/bin"
           env
           kb-sdk help
           kb-sdk init --example -l python -u sychan MyContigFilter

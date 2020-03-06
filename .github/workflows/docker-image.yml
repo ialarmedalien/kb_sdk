@@ -39,15 +39,18 @@ jobs:
       - name: Build with Ant
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-        run: | 
+        run: |
           make
           make sdkbase
           env
           kb-sdk help
-          kb-sdk init --example -l python -u sychan MyContigFilter
-          kb-sdk init --example -l perl -u user PerlExample
+          kb-sdk init -l python -u sychan --example MyContigFilter
+          kb-sdk init -l perl -u user --example PerlExample
+          kb-sdk init -l perl -u user PerlBase
           cd MyContigFilter
           make
           kb-sdk test
           cd ../PerlExample
+          kb-sdk test
+          cd ../PerlBase
           kb-sdk test

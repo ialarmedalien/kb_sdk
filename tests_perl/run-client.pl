@@ -123,7 +123,7 @@ else {
     $client_args{ ignore_kbase_config } = 1;
 }
 
-my $client  = $client_module->new( $endpoint, %client_args );
+my $client = $client_module->new( $endpoint, %client_args );
 
 # loop over each test case and run it against the server.  We create a new client instance
 # for each test
@@ -134,7 +134,7 @@ my @result;
 
     my $error;
     try {
-        @result = $client->$method( @$params );
+        @result = $client->$method( @{ $params } );
     }
     catch {
         $error = $_;

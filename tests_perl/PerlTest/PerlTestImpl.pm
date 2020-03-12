@@ -1,10 +1,14 @@
-package TestImpl;
-use strict;
-use Bio::KBase::Exceptions;
+package PerlTest::PerlTestImpl;
 
+use strict;
+use warnings;
+
+use Bio::KBase::Exceptions;
 # Use Semantic Versioning (2.0.0-rc.1)
 # http://semver.org
-our $VERSION = "0.1.0";
+our $VERSION = '0.0.1';
+our $GIT_URL = '';
+our $GIT_COMMIT_HASH = '';
 
 =head1 NAME
 
@@ -25,11 +29,11 @@ sub new {
     bless $self, $class;
 
     #BEGIN_CONSTRUCTOR
+
     #END_CONSTRUCTOR
 
-    if ( $self->can( '_init_instance' ) ) {
-        $self->_init_instance();
-    }
+    $self->_init_instance() if $self->can( '_init_instance' );
+
     return $self;
 }
 
@@ -74,43 +78,37 @@ $return is an int
 =cut
 
 sub one_simple_param {
-    my $self = shift;
-    my ( $val ) = @_;
+    my ( $self, $val ) = @_;
+    my @bad_arguments;
 
-    my @_bad_arguments;
-    ( !ref( $val ) )
-        or
-        push( @_bad_arguments, "Invalid type for argument \"val\" (value was \"$val\")" );
-    if ( @_bad_arguments ) {
-        my $msg = "Invalid arguments passed to one_simple_param:\n"
-            . join( "", map { "\t$_\n" } @_bad_arguments );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'one_simple_param'
-        );
-    }
+    push @bad_arguments,
+        { argument => "val", value => $val }
+        unless !ref($val);
 
-    my $ctx = $basicsrvServer::CallContext;
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'argument', 'one_simple_param', \@bad_arguments ),
+        method_name => 'one_simple_param',
+    ) if @bad_arguments;
+
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     my ( $return );
-
     #BEGIN one_simple_param
-    $return = $val;
-
     #END one_simple_param
-    my @_bad_returns;
-    ( !ref( $return ) )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return\" (value was \"$return\")" );
-    if ( @_bad_returns ) {
-        my $msg = "Invalid returns passed to one_simple_param:\n"
-            . join( "", map { "\t$_\n" } @_bad_returns );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'one_simple_param'
-        );
-    }
+    my @bad_returns;
+    push @bad_returns,
+        { argument => "return", value => $return }
+        unless !ref($return);
+
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'return', 'one_simple_param', \@bad_returns ),
+        method_name => 'one_simple_param',
+    ) if @bad_returns;
+
     return ( $return );
 }
+
+
+
 
 =head2 nothing
 
@@ -147,12 +145,14 @@ sub one_simple_param {
 sub nothing {
     my $self = shift;
 
-    my $ctx = $basicsrvServer::CallContext;
-
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     #BEGIN nothing
     #END nothing
-    return ();
+    return (  );
 }
+
+
+
 
 =head2 one_complex_param
 
@@ -213,42 +213,37 @@ double_number is a float
 =cut
 
 sub one_complex_param {
-    my $self = shift;
-    my ( $val2 ) = @_;
+    my ( $self, $val2 ) = @_;
+    my @bad_arguments;
 
-    my @_bad_arguments;
-    ( ref( $val2 ) eq 'HASH' )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val2\" (value was \"$val2\")" );
-    if ( @_bad_arguments ) {
-        my $msg = "Invalid arguments passed to one_complex_param:\n"
-            . join( "", map { "\t$_\n" } @_bad_arguments );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'one_complex_param'
-        );
-    }
+    push @bad_arguments,
+        { argument => "val2", value => $val2 }
+        unless ref($val2) eq 'HASH';
 
-    my $ctx = $basicsrvServer::CallContext;
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'argument', 'one_complex_param', \@bad_arguments ),
+        method_name => 'one_complex_param',
+    ) if @bad_arguments;
+
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     my ( $return );
-
     #BEGIN one_complex_param
-    $return = {};    #$val2;
-                     #END one_complex_param
-    my @_bad_returns;
-    ( ref( $return ) eq 'HASH' )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return\" (value was \"$return\")" );
-    if ( @_bad_returns ) {
-        my $msg = "Invalid returns passed to one_complex_param:\n"
-            . join( "", map { "\t$_\n" } @_bad_returns );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'one_complex_param'
-        );
-    }
+    #END one_complex_param
+    my @bad_returns;
+    push @bad_returns,
+        { argument => "return", value => $return }
+        unless ref($return) eq 'HASH';
+
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'return', 'one_complex_param', \@bad_returns ),
+        method_name => 'one_complex_param',
+    ) if @bad_returns;
+
     return ( $return );
 }
+
+
+
 
 =head2 many_simple_params
 
@@ -307,64 +302,55 @@ $return_4 is a reference to a list containing 2 items:
 =cut
 
 sub many_simple_params {
-    my $self = shift;
-    my ( $val1, $val2, $val3, $val4 ) = @_;
+    my ( $self, $val1, $val2, $val3, $val4 ) = @_;
+    my @bad_arguments;
 
-    my @_bad_arguments;
-    ( !ref( $val1 ) )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val1\" (value was \"$val1\")" );
-    ( !ref( $val2 ) )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val2\" (value was \"$val2\")" );
-    ( !ref( $val3 ) )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val3\" (value was \"$val3\")" );
-    ( ref( $val4 ) eq 'ARRAY' )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val4\" (value was \"$val4\")" );
-    if ( @_bad_arguments ) {
-        my $msg = "Invalid arguments passed to many_simple_params:\n"
-            . join( "", map { "\t$_\n" } @_bad_arguments );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'many_simple_params'
-        );
-    }
+    push @bad_arguments,
+        { argument => "val1", value => $val1 }
+        unless !ref($val1);
+    push @bad_arguments,
+        { argument => "val2", value => $val2 }
+        unless !ref($val2);
+    push @bad_arguments,
+        { argument => "val3", value => $val3 }
+        unless !ref($val3);
+    push @bad_arguments,
+        { argument => "val4", value => $val4 }
+        unless ref($val4) eq 'ARRAY';
 
-    my $ctx = $basicsrvServer::CallContext;
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'argument', 'many_simple_params', \@bad_arguments ),
+        method_name => 'many_simple_params',
+    ) if @bad_arguments;
+
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     my ( $return_1, $return_2, $return_3, $return_4 );
-
     #BEGIN many_simple_params
-    $return_1 = $val1;
-    $return_2 = $val2;
-    $return_3 = $val3;
-    $return_4 = $val4;
-
     #END many_simple_params
-    my @_bad_returns;
-    ( !ref( $return_1 ) )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_1\" (value was \"$return_1\")" );
-    ( !ref( $return_2 ) )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_2\" (value was \"$return_2\")" );
-    ( !ref( $return_3 ) )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_3\" (value was \"$return_3\")" );
-    ( ref( $return_4 ) eq 'ARRAY' )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_4\" (value was \"$return_4\")" );
-    if ( @_bad_returns ) {
-        my $msg = "Invalid returns passed to many_simple_params:\n"
-            . join( "", map { "\t$_\n" } @_bad_returns );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'many_simple_params'
-        );
-    }
+    my @bad_returns;
+    push @bad_returns,
+        { argument => "return_1", value => $return_1 }
+        unless !ref($return_1);
+    push @bad_returns,
+        { argument => "return_2", value => $return_2 }
+        unless !ref($return_2);
+    push @bad_returns,
+        { argument => "return_3", value => $return_3 }
+        unless !ref($return_3);
+    push @bad_returns,
+        { argument => "return_4", value => $return_4 }
+        unless ref($return_4) eq 'ARRAY';
+
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'return', 'many_simple_params', \@bad_returns ),
+        method_name => 'many_simple_params',
+    ) if @bad_returns;
+
     return ( $return_1, $return_2, $return_3, $return_4 );
 }
+
+
+
 
 =head2 many_complex_params
 
@@ -429,50 +415,43 @@ complex_struct is a reference to a hash where the following keys are defined:
 =cut
 
 sub many_complex_params {
-    my $self = shift;
-    my ( $simple_val, $complex_val ) = @_;
+    my ( $self, $simple_val, $complex_val ) = @_;
+    my @bad_arguments;
 
-    my @_bad_arguments;
-    ( ref( $simple_val ) eq 'HASH' )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"simple_val\" (value was \"$simple_val\")" );
-    ( ref( $complex_val ) eq 'HASH' )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"complex_val\" (value was \"$complex_val\")" );
-    if ( @_bad_arguments ) {
-        my $msg = "Invalid arguments passed to many_complex_params:\n"
-            . join( "", map { "\t$_\n" } @_bad_arguments );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'many_complex_params'
-        );
-    }
+    push @bad_arguments,
+        { argument => "simple_val", value => $simple_val }
+        unless ref($simple_val) eq 'HASH';
+    push @bad_arguments,
+        { argument => "complex_val", value => $complex_val }
+        unless ref($complex_val) eq 'HASH';
 
-    my $ctx = $basicsrvServer::CallContext;
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'argument', 'many_complex_params', \@bad_arguments ),
+        method_name => 'many_complex_params',
+    ) if @bad_arguments;
+
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     my ( $return_1, $return_2 );
-
     #BEGIN many_complex_params
-    $return_1 = $simple_val;
-    $return_2 = $complex_val;
-
     #END many_complex_params
-    my @_bad_returns;
-    ( ref( $return_1 ) eq 'HASH' )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_1\" (value was \"$return_1\")" );
-    ( ref( $return_2 ) eq 'HASH' )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return_2\" (value was \"$return_2\")" );
-    if ( @_bad_returns ) {
-        my $msg = "Invalid returns passed to many_complex_params:\n"
-            . join( "", map { "\t$_\n" } @_bad_returns );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'many_complex_params'
-        );
-    }
+    my @bad_returns;
+    push @bad_returns,
+        { argument => "return_1", value => $return_1 }
+        unless ref($return_1) eq 'HASH';
+    push @bad_returns,
+        { argument => "return_2", value => $return_2 }
+        unless ref($return_2) eq 'HASH';
+
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'return', 'many_complex_params', \@bad_returns ),
+        method_name => 'many_complex_params',
+    ) if @bad_returns;
+
     return ( $return_1, $return_2 );
 }
+
+
+
 
 =head2 with_auth
 
@@ -511,47 +490,41 @@ $return is an int
 =cut
 
 sub with_auth {
-    my $self = shift;
-    my ( $val1 ) = @_;
+    my ( $self, $val1 ) = @_;
+    my @bad_arguments;
 
-    my @_bad_arguments;
-    ( !ref( $val1 ) )
-        or push( @_bad_arguments,
-        "Invalid type for argument \"val1\" (value was \"$val1\")" );
-    if ( @_bad_arguments ) {
-        my $msg = "Invalid arguments passed to with_auth:\n"
-            . join( "", map { "\t$_\n" } @_bad_arguments );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'with_auth'
-        );
-    }
+    push @bad_arguments,
+        { argument => "val1", value => $val1 }
+        unless !ref($val1);
 
-    my $ctx = $basicsrvServer::CallContext;
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'argument', 'with_auth', \@bad_arguments ),
+        method_name => 'with_auth',
+    ) if @bad_arguments;
+
+    my $ctx = $PerlTest::PerlTestServer::CallContext;
     my ( $return );
-
     #BEGIN with_auth
-    $return = $val1;
-
     #END with_auth
-    my @_bad_returns;
-    ( !ref( $return ) )
-        or push( @_bad_returns,
-        "Invalid type for return variable \"return\" (value was \"$return\")" );
-    if ( @_bad_returns ) {
-        my $msg = "Invalid returns passed to with_auth:\n"
-            . join( "", map { "\t$_\n" } @_bad_returns );
-        Bio::KBase::Exceptions::ArgumentValidationError->throw(
-            error       => $msg,
-            method_name => 'with_auth'
-        );
-    }
+    my @bad_returns;
+    push @bad_returns,
+        { argument => "return", value => $return }
+        unless !ref($return);
+
+    Bio::KBase::Exceptions::ArgumentValidationError->throw(
+        error       => format_error_string( 'return', 'with_auth', \@bad_returns ),
+        method_name => 'with_auth',
+    ) if @bad_returns;
+
     return ( $return );
 }
 
-=head2 version
 
-  $return = $obj->version()
+
+
+=head2 status
+
+  $return = $obj->status()
 
 =over 4
 
@@ -573,14 +546,24 @@ $return is a string
 
 =item Description
 
-Return the module version. This is a Semantic Versioning number.
+Return the module status. This is a structure including Semantic Versioning number, state and git info.
 
 =back
 
 =cut
 
-sub version {
-    return $VERSION;
+sub status {
+    my $return;
+    #BEGIN_STATUS
+    $return = {
+        "state"           => "OK",
+        "message"         => "",
+        "version"         => $VERSION,
+        "git_url"         => $GIT_URL,
+        "git_commit_hash" => $GIT_COMMIT_HASH
+    };
+    #END_STATUS
+    return ( $return );
 }
 
 =head1 TYPES
@@ -716,5 +699,19 @@ large_prop4 has a value which is a reference to a hash where the key is a string
 
 =cut
 
-1;
+sub format_error_string {
+    my ( $type, $method_name, $values ) = @_;
 
+    $type = 'return value' if $type ne 'argument';
+
+    my @strings = map {
+        "\tInvalid type for $type '"
+        . $_->{ argument } . "' "
+        . "(value was '" . $_->{ value } . "')"
+    } @$values;
+
+    return join "\n", "Invalid " . $type . "s passed to $method_name:", @strings;
+}
+
+
+1;

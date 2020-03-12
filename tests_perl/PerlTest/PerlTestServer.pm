@@ -1,24 +1,17 @@
-package ${server_package_name};
-
-#set( $ctx_pkg = "${server_package_name}Context" )
-#set( $stderr_pkg = "${server_package_name}StderrWrapper" )
+package PerlTest::PerlTestServer;
 
 use Moose;
 use POSIX;
 use JSON;
 use Bio::KBase::Log;
 use Config::Simple;
-use Try::Tiny;
-
 my $get_time = sub { time, 0 };
 eval {
     require Time::HiRes;
     $get_time = sub { Time::HiRes::gettimeofday };
 };
 
-#if( $authenticated )
 use Bio::KBase::AuthToken;
-#end
 
 extends 'RPC::Any::Server::JSONRPC::PSGI';
 
@@ -37,91 +30,84 @@ has 'local_headers' => ( is => 'ro', isa => 'HashRef' );
 our $CallContext;
 
 our %return_counts = (
-#set( $status_in_kidl = false )
-#foreach( $module in $modules )
-#foreach( $method in $module.methods )
-#if( ${method.name} == "status" )
-#set( $status_in_kidl = true )
-#end
-    '${method.name}' => ${method.ret_count},
-#end
-#end
-#if( !$status_in_kidl )
-    status  => 1,
-#end
+    'one_simple_param'    => 1,
+    'nothing'             => 0,
+    'one_complex_param'   => 1,
+    'many_simple_params'  => 4,
+    'many_complex_params' => 2,
+    'with_auth'           => 1,
+    'status'              => 1,
 );
 
-#if( $authenticated )
 our %method_authentication = (
-#foreach( $module in $modules )
-#foreach( $method in $module.methods )
-    '${method.name}' => '${method.authentication}',
-#end
-#end
+    'one_simple_param'    => 'none',
+    'nothing'             => 'none',
+    'one_complex_param'   => 'none',
+    'many_simple_params'  => 'none',
+    'many_complex_params' => 'none',
+    'with_auth'           => 'required',
 );
-#end
 
 sub _build_valid_methods {
-    return {
-#foreach( $module in $modules )
-#set( $last_module = $module )
-#foreach( $method in $module.methods )
-        '${method.name}' => 1,
-#end
-#end
-#if( !$status_in_kidl )
-        status  => 1,
-#end
+    my ( $self ) = @_;
+    my $methods = {
+        'one_simple_param'    => 1,
+        'nothing'             => 1,
+        'one_complex_param'   => 1,
+        'many_simple_params'  => 1,
+        'many_complex_params' => 1,
+        'with_auth'           => 1,
+        'status'              => 1,
     };
+    return $methods;
 }
 
 my $DEPLOY  = 'KB_DEPLOYMENT_CONFIG';
 my $SERVICE = 'KB_SERVICE_NAME';
 
 sub get_config_file {
-
-    return undef unless defined $ENV${empty_escaper}{ $DEPLOY };
-    return $ENV${empty_escaper}{ $DEPLOY };
-
+    my ( $self ) = @_;
+    if ( !defined $ENV{ $DEPLOY } ) {
+        return undef;
+    }
+    return $ENV{ $DEPLOY };
 }
 
 sub get_service_name {
-
-    return defined $ENV${empty_escaper}{ $SERVICE }
-        ? $ENV${empty_escaper}{ $SERVICE }
-        : '${service_name}';
+    my ( $self ) = @_;
+    if ( !defined $ENV{ $SERVICE } ) {
+        return 'basicsrv';
+    }
+    return $ENV{ $SERVICE };
 }
 
 sub _build_config {
-    my ( $self )    = @_;
-    my $sn          = $self->get_service_name;
-    my $cf          = $self->get_config_file;
-    return {} unless $cf;
-
-    my $cfg         = Config::Simple->new( $cf );
-    my $cfgdict     = $cfg->get_block( $sn );
-    return {} unless $cfgdict;
-
+    my ( $self ) = @_;
+    my $sn       = $self->get_service_name();
+    my $cf       = $self->get_config_file();
+    if ( !( $cf ) ) {
+        return {};
+    }
+    my $cfg     = new Config::Simple( $cf );
+    my $cfgdict = $cfg->get_block( $sn );
+    if ( !( $cfgdict ) ) {
+        return {};
+    }
     return $cfgdict;
 }
 
 sub logcallback {
     my ( $self ) = @_;
-    $self->loggers()->{ serverlog }->set_log_file(
-        $self->{ loggers }{ userlog }->get_log_file()
-    );
+    $self->loggers()->{ serverlog }
+        ->set_log_file( $self->{ loggers }->{ userlog }->get_log_file() );
 }
 
 sub log {
     my ( $self, $level, $context, $message, $tag ) = @_;
-    my $user
-        = defined $context->user_id()
-        ? $context->user_id
-        : undef;
-    $self->loggers()->{ serverlog }->log_message(
-        $level, $message, $user, $context->module(), $context->method(),
-        $context->call_id(), $context->client_ip(), $tag
-    );
+    my $user = defined( $context->user_id() ) ? $context->user_id() : undef;
+    $self->loggers()->{ serverlog }->log_message( $level, $message, $user,
+        $context->module(), $context->method(), $context->call_id(),
+        $context->client_ip(), $tag );
 }
 
 sub _build_loggers {
@@ -140,9 +126,7 @@ sub _build_loggers {
             call_id        => 1,
             changecallback => $callback,
             tag            => 1,
-            config         => $self->get_config_file()
-        }
-    );
+            config         => $self->get_config_file() } );
     $loggers->{ serverlog } = Bio::KBase::Log->new(
         $submod,
         {},
@@ -153,57 +137,44 @@ sub _build_loggers {
             method     => 1,
             call_id    => 1,
             tag        => 1,
-            logfile    => $loggers->{ userlog }->get_log_file()
-        }
-    );
+            logfile    => $loggers->{ userlog }->get_log_file() } );
     $loggers->{ serverlog }->set_log_level( 6 );
     return $loggers;
 }
-
 
 #override of RPC::Any::Server
 sub handle_error {
     my ( $self, $error ) = @_;
 
     unless ( ref( $error ) eq 'HASH'
-        || blessed $error && $error->isa( 'RPC::Any::Exception' ) ) {
+        || ( blessed $error and $error->isa( 'RPC::Any::Exception' ) ) )
+    {
         $error = RPC::Any::Exception::PerlError->new( message => $error );
     }
-    my ( $output, $encoding_error );
-    try {
+    my $output;
+    eval {
         my $encoded_error = $self->encode_output_from_exception( $error );
         $output = $self->produce_output( $encoded_error );
-    }
-    catch {
-        $encoding_error = $_;
     };
 
     return $output if $output;
 
     die "$error\n\nAlso, an error was encountered while trying to send"
-        . " this error: $encoding_error\n";
+        . " this error: $@\n";
 }
-
 
 #override of RPC::Any::JSONRPC
 sub encode_output_from_exception {
     my ( $self, $exception ) = @_;
-
     my %error_params;
-
-    if ( ref $exception eq 'HASH' ) {
-        %error_params = %$exception;
-        if ( defined( $error_params${empty_escaper}{ context } ) ) {
-            my @errlines    = split "\n", $error_params${empty_escaper}{ data };
-            $self->log(
-                $Bio::KBase::Log::ERR,
-                $error_params${empty_escaper}{ context },
-                [
-                    $error_params${empty_escaper}{ message },
-                    @errlines
-                ],
-            );
-            delete $error_params${empty_escaper}{ context };
+    if ( ref( $exception ) eq 'HASH' ) {
+        %error_params = %{ $exception };
+        if ( defined( $error_params{ context } ) ) {
+            my @errlines;
+            $errlines[ 0 ] = $error_params{ message };
+            push @errlines, split( "\n", $error_params{ data } );
+            $self->log( $Bio::KBase::Log::ERR, $error_params{ context }, \@errlines );
+            delete $error_params{ context };
         }
     }
     else {
@@ -212,20 +183,24 @@ sub encode_output_from_exception {
             code    => $exception->code,
         );
     }
+    my $json_error;
+    if ( $self->_last_call ) {
+        $json_error = $self->_last_call->return_error( %error_params );
+    }
 
-    my $json_error = ( $self->_last_call )
-        ? $self->_last_call->return_error( %error_params )
-        # Default to default_version. This happens when we throw an exception
-        # before inbound parsing is complete.
-        : $self->_default_error( %error_params );
-
+    # Default to default_version. This happens when we throw an exception
+    # before inbound parsing is complete.
+    else {
+        $json_error = $self->_default_error( %error_params );
+    }
     return $self->encode_output_from_object( $json_error );
 }
 
 sub trim {
     my ( $str ) = @_;
-    return undef unless $str;
-
+    if ( !( defined $str ) ) {
+        return $str;
+    }
     $str =~ s/^\s+|\s+$//g;
     return $str;
 }
@@ -239,7 +214,7 @@ sub getIPAddress {
 
     if ( $trustXHeaders ) {
         if ( $xFF ) {
-            my @tmp = split ",", $xFF;
+            my @tmp = split( ",", $xFF );
             return trim( $tmp[ 0 ] );
         }
         if ( $realIP ) {
@@ -252,76 +227,68 @@ sub getIPAddress {
     return "localhost";
 }
 
-
 sub call_method {
     my ( $self, $data, $method_info ) = @_;
 
-    my ( $module, $method, $modname ) = @$method_info${empty_escaper}{ qw( module method modname )};
+    my ( $module, $method, $modname ) = @$method_info{ qw(module method modname) };
 
-    my $ctx = ${ ctx_pkg }->new(
-        $self->{ loggers }{ userlog },
-        client_ip => $self->getIPAddress()
-    );
+    my $ctx = PerlTest::PerlTestServerContext->new( $self->{ loggers }->{ userlog },
+        client_ip => $self->getIPAddress() );
     $ctx->module( $modname );
     $ctx->method( $method );
-    $ctx->call_id( $self->{ _last_call }{ id } );
+    $ctx->call_id( $self->{ _last_call }->{ id } );
 
     my $args = $data->{ arguments };
-    my $prov_action = {
-        service         => $modname,
-        method          => $method,
-        method_params   => $args
-    };
-
+    my $prov_action
+        = { 'service' => $modname, 'method' => $method, 'method_params' => $args };
     $ctx->provenance( [ $prov_action ] );
+    {
+        # Service basicsrv requires authentication.
 
+        my $method_auth = $method_authentication{ $method };
+        $ctx->authenticated( 0 );
+        if ( $method_auth eq 'none' ) {
 
-#if( $authenticated )
-{
-    # Service ${service_name} requires authentication.
-
-    my $method_auth = $method_authentication${empty_escaper}{ $method };
-    $ctx->authenticated( 0 );
-    unless ( $method_auth eq 'none' ) {
-        my $token = $self->_plack_req_header( "Authorization" );
-
-        if ( !$token && $method_auth eq 'required' ) {
-            $self->exception( 'PerlError',
-                "Authentication required for ${last_module.module_name} but no authentication header was passed"
-            );
+            # No authentication required here. Move along.
         }
+        else {
+            my $token = $self->_plack_req_header( "Authorization" );
 
-        my %args = (
-            token           => $token,
-            ignore_authrc   => 1,
-        );
-        if ( $self->config->{ 'auth-service-url' } ) {
-            $args{ auth_svc }   = $self->config->{ 'auth-service-url' };
-        }
-        my $auth_token  = Bio::KBase::AuthToken->new( %args );
-        my $valid       = $auth_token->validate();
+            if ( !$token && $method_auth eq 'required' ) {
+                $self->exception( 'PerlError',
+                    "Authentication required for Basic but no authentication header was passed"
+                );
+            }
 
-        # Only throw an exception if authentication was required and it fails
-        if ( $method_auth eq 'required' && !$valid ) {
-            $self->exception( 'PerlError',
-                "Token validation failed: "
-                . $auth_token->error_message
-            );
-        }
-        elsif ( $valid ) {
-            $ctx->authenticated( 1 );
-            $ctx->user_id( $auth_token->user_id );
-            $ctx->token( $token );
+            my $auth_token;
+            if ( $self->config->{ 'auth-service-url' } ) {
+                $auth_token = Bio::KBase::AuthToken->new(
+                    token         => $token,
+                    ignore_authrc => 1,
+                    auth_svc      => $self->config->{ 'auth-service-url' } );
+            }
+            else {
+                $auth_token
+                    = Bio::KBase::AuthToken->new( token => $token, ignore_authrc => 1 );
+            }
+
+            my $valid = $auth_token->validate();
+
+            # Only throw an exception if authentication was required and it fails
+            if ( $method_auth eq 'required' && !$valid ) {
+                $self->exception( 'PerlError',
+                    "Token validation failed: " . $auth_token->error_message );
+            }
+            elsif ( $valid ) {
+                $ctx->authenticated( 1 );
+                $ctx->user_id( $auth_token->user_id );
+                $ctx->token( $token );
+            }
         }
     }
-
-}
-#else
-    # Service ${service_name} does not require authentication.
-#end
     my $new_isa = $self->get_package_isa( $module );
     no strict 'refs';
-    local @{"${module}::ISA"} = @$new_isa;
+    local @{ "${module}::ISA" } = @$new_isa;
     local $CallContext = $ctx;
     my @result;
     {
@@ -329,34 +296,30 @@ sub call_method {
         # Process tag and metadata information if present.
         #
         my $tag = $self->_plack_req_header( "Kbrpc-Tag" );
-        unless ( !$tag ) {
-            my ($t, $us) = &$get_time();
-            $us          = sprintf( "%06d", $us );
-            my $ts       = strftime( "%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t );
-            $tag         = "S:$self->{hostname}:$$:$ts";
+        if ( !$tag ) {
+            my ( $t, $us ) = &$get_time();
+            $us = sprintf( "%06d", $us );
+            my $ts = strftime( "%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t );
+            $tag = "S:$self->{hostname}:$$:$ts";
         }
-        local $ENV${empty_escaper}{ KBRPC_TAG } = $tag;
+        local $ENV{ KBRPC_TAG } = $tag;
         my $kb_metadata  = $self->_plack_req_header( "Kbrpc-Metadata" );
         my $kb_errordest = $self->_plack_req_header( "Kbrpc-Errordest" );
-        local $ENV${empty_escaper}{ KBRPC_METADATA }    = $kb_metadata  if $kb_metadata;
-        local $ENV${empty_escaper}{ KBRPC_ERROR_DEST }  = $kb_errordest if $kb_errordest;
+        local $ENV{ KBRPC_METADATA }   = $kb_metadata  if $kb_metadata;
+        local $ENV{ KBRPC_ERROR_DEST } = $kb_errordest if $kb_errordest;
 
-        my $stderr = ${ stderr_pkg }->new( $ctx, $get_time );
+        my $stderr = PerlTest::PerlTestServerStderrWrapper->new( $ctx, $get_time );
         $ctx->stderr( $stderr );
 
-        my $x_forwarded_for_header = $self->_plack_req_header( "X-Forwarded-For" );
-        $self->log(
-            $Bio::KBase::Log::INFO,
-            $ctx,
-            "X-Forwarded-For: " . $x_forwarded_for_header,
-            $tag
-        ) if $x_forwarded_for_header;
+        my $xFF = $self->_plack_req_header( "X-Forwarded-For" );
+        if ( $xFF ) {
+            $self->log( $Bio::KBase::Log::INFO, $ctx, "X-Forwarded-For: " . $xFF, $tag );
+        }
 
-
-        my $nicerr;
-        try {
+        my $err;
+        eval {
             $self->log( $Bio::KBase::Log::INFO, $ctx, "start method", $tag );
-            local $SIG${empty_escaper}{ __WARN__ } = sub {
+            local $SIG{ __WARN__ } = sub {
                 my ( $msg ) = @_;
                 $stderr->log( $msg );
                 print STDERR $msg;
@@ -364,37 +327,42 @@ sub call_method {
 
             @result = $module->$method( @{ $data->{ arguments } } );
             $self->log( $Bio::KBase::Log::INFO, $ctx, "end method", $tag );
-        }
-        catch {
-            my $err = $_;
+        };
+
+        if ( $@ ) {
+            my $err = $@;
             $stderr->log( $err );
             $ctx->stderr( undef );
             undef $stderr;
             $self->log( $Bio::KBase::Log::INFO, $ctx, "fail method", $tag );
-            my $nicerr = {
-                code    => -32603,        # perl error from RPC::Any::Exception
-                context => $ctx
-            }
+            my $nicerr;
             if ( ref( $err ) eq "Bio::KBase::Exceptions::KBaseException" ) {
-                $nicerr->{ message }    = $err->error;
-                $nicerr->{ data }       = $err->trace->as_string,
+                $nicerr = {
+                    code    => -32603,        # perl error from RPC::Any::Exception
+                    message => $err->error,
+                    data    => $err->trace->as_string,
+                    context => $ctx
+                };
             }
             else {
                 my $str = "$err";
-                # is this still necessary? not sure
-                $str    =~ s/Bio::KBase::CDMI::Service::call_method.*//s;
+                $str =~ s/Bio::KBase::CDMI::Service::call_method.*//s; # is this still necessary? not sure
                 my $msg = $str;
-                $msg    =~ s/ at [^\s]+.pm line \d+.\n$//;
-                $nicerr->{ message }    = $msg;
-                $nicerr->{ data }       = $str;
+                $msg =~ s/ at [^\s]+.pm line \d+.\n$//;
+                $nicerr = {
+                    code    => -32603,    # perl error from RPC::Any::Exception
+                    message => $msg,
+                    data    => $str,
+                    context => $ctx
+                };
             }
-        };
-        die $nicerr if $nicerr;
+            die $nicerr;
+        }
         $ctx->stderr( undef );
         undef $stderr;
     }
     my $result;
-    if ( $return_counts${empty_escaper}{ $method } == 1 ) {
+    if ( $return_counts{ $method } == 1 ) {
         $result = [ [ $result[ 0 ] ] ];
     }
     else {
@@ -405,10 +373,9 @@ sub call_method {
 
 sub _plack_req_header {
     my ( $self, $header_name ) = @_;
-
-    return $self->local_headers->{ $header_name }
-        if defined( $self->local_headers );
-
+    if ( defined( $self->local_headers ) ) {
+        return $self->local_headers->{ $header_name };
+    }
     return $self->_plack_req->header( $header_name );
 }
 
@@ -420,15 +387,17 @@ sub get_method {
     $full_name =~ /^(\S+)\.([^\.]+)$/;
     my ( $package, $method ) = ( $1, $2 );
 
-    $self->exception( 'NoSuchMethod',
-          "'$full_name' is not a valid method. It must"
-        . " contain a package name, followed by a period,"
-        . " followed by a method name." )
-        unless $package && $method;
+    if ( !$package || !$method ) {
+        $self->exception( 'NoSuchMethod',
+                  "'$full_name' is not a valid method. It must"
+                . " contain a package name, followed by a period,"
+                . " followed by a method name." );
+    }
 
-    $self->exception( 'NoSuchMethod',
-        "'$method' is not a valid method in service ${service_name}." )
-        unless $self->valid_methods->{ $method };
+    if ( !$self->valid_methods->{ $method } ) {
+        $self->exception( 'NoSuchMethod',
+            "'$method' is not a valid method in service basicsrv." );
+    }
 
     my $inst = $self->instance_dispatch->{ $package };
     my $module;
@@ -437,26 +406,26 @@ sub get_method {
     }
     else {
         $module = $self->get_module( $package );
-        $self->exception( 'NoSuchMethod',
-            "There is no method package named '$package'." )
-            unless $module;
+        if ( !$module ) {
+            $self->exception( 'NoSuchMethod',
+                "There is no method package named '$package'." );
+        }
 
         Class::MOP::load_class( $module );
     }
 
-    $self->exception( 'NoSuchMethod',
-        "There is no method named '$method' in the" . " '$package' package." )
-        unless $module->can( $method );
+    if ( !$module->can( $method ) ) {
+        $self->exception( 'NoSuchMethod',
+            "There is no method named '$method' in the" . " '$package' package." );
+    }
 
     return { module => $module, method => $method, modname => $package };
 }
 
-
 sub handle_input_cli {
     my ( $self, $input ) = @_;
-    my ( $retval, $err );
-
-    try {
+    my $retval;
+    eval {
         #my $input_info = $self->check_input($input);
         #my $input_object = $self->decode_input_to_object($input);
         $self->parser->json->utf8( utf8::is_utf8( $input ) ? 0 : 1 );
@@ -468,18 +437,13 @@ sub handle_input_cli {
         my $method_result    = $self->call_method( $data, $method_info );
         my $collapsed_result = $self->collapse_result( $method_result );
         my $output_object    = $self->output_data_to_object( $collapsed_result );
-        $retval              = $self->parser->return_to_json( $output_object );
-    }
-    catch {
-        $err = $_;
+        $retval = $self->parser->return_to_json( $output_object );
     };
-
     return $retval if defined $retval;
 
     # The only way that we can get here is by something throwing an error.
-    return $self->handle_error_cli( $err );
+    return $self->handle_error_cli( $@ );
 }
-
 
 sub handle_error_cli {
     my ( $self, $error ) = @_;
@@ -487,13 +451,14 @@ sub handle_error_cli {
     eval {
         my %error_params;
         if ( ref( $error ) eq 'HASH' ) {
-            %error_params = %$error;
-            if ( defined ( $error_params${empty_escaper}{ context } ) ) {
+            %error_params = %{ $error };
+            if ( defined( $error_params{ context } ) ) {
+
                 # my @errlines;
-                # $errlines[0] = $error_params${empty_escaper}{message};
-                # push @errlines, split("\n", $error_params${empty_escaper}{data});
-                # $self->log($Bio::KBase::Log::ERR, $error_params${empty_escaper}{context}, \@errlines);
-                delete $error_params${empty_escaper}{ context };
+                # $errlines[0] = $error_params{message};
+                # push @errlines, split("\n", $error_params{data});
+                # $self->log($Bio::KBase::Log::ERR, $error_params{context}, \@errlines);
+                delete $error_params{ context };
             }
         }
         else {
@@ -508,7 +473,8 @@ sub handle_error_cli {
         my $json_error;
         if ( $self->_last_call ) {
             $json_error = $self->_last_call->return_error( %error_params );
-        } else {
+        }
+        else {
             $json_error = $self->_default_error( %error_params );
         }
         $output = $self->parser->return_to_json( $json_error );
@@ -518,14 +484,14 @@ sub handle_error_cli {
         . " this error: $@\n";
 }
 
-package ${ctx_pkg};
+package PerlTest::PerlTestServerContext;
 
 use strict;
 use warnings;
 
 =head1 NAME
 
-${ctx_pkg}
+PerlTest::PerlTestServerContext
 
 head1 DESCRIPTION
 
@@ -538,12 +504,11 @@ is available via $context->client_ip.
 
 use base 'Class::Accessor';
 
-__PACKAGE__->mk_accessors( qw(
-        user_id client_ip authenticated token
+__PACKAGE__->mk_accessors(
+    qw(user_id client_ip authenticated token
         module method call_id hostname stderr
-        provenance
-) );
-
+        provenance)
+);
 
 sub new {
     my ( $class, $logger, %opts ) = @_;
@@ -553,16 +518,15 @@ sub new {
     $self->{ hostname } ||= 'unknown-host';
     $self->{ _logger }       = $logger;
     $self->{ _debug_levels } = {
-        7      => 1,
-        8      => 1,
-        9      => 1,
-        DEBUG  => 1,
-        DEBUG2 => 1,
-        DEBUG3 => 1
+        7        => 1,
+        8        => 1,
+        9        => 1,
+        'DEBUG'  => 1,
+        'DEBUG2' => 1,
+        'DEBUG3' => 1
     };
     return bless $self, $class;
 }
-
 
 sub _get_user {
     my ( $self ) = @_;
@@ -616,8 +580,7 @@ sub clear_log_level {
     $self->{ _logger }->clear_user_log_level();
 }
 
-
-package ${stderr_pkg};
+package PerlTest::PerlTestServerStderrWrapper;
 
 use strict;
 use warnings;
@@ -626,35 +589,33 @@ use Time::HiRes 'gettimeofday';
 
 sub new {
     my ( $class, $ctx, $get_time ) = @_;
-    my $self        = { get_time => $get_time, };
+    my $self = { get_time => $get_time, };
 
-    my $dest        = $ENV${empty_escaper}{ KBRPC_ERROR_DEST }
-        if exists $ENV${empty_escaper}{ KBRPC_ERROR_DEST };
-    my $tag         = $ENV${empty_escaper}{ KBRPC_TAG }
-        if exists $ENV${empty_escaper}{ KBRPC_TAG };
-    my ( $t, $us )  = gettimeofday();
-    $us             = sprintf("%06d", $us);
-    my $ts          = strftime("%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t);
+    my $dest = $ENV{ KBRPC_ERROR_DEST } if exists $ENV{ KBRPC_ERROR_DEST };
+    my $tag  = $ENV{ KBRPC_TAG }        if exists $ENV{ KBRPC_TAG };
+    my ( $t, $us ) = gettimeofday();
+    $us = sprintf( "%06d", $us );
+    my $ts = strftime( "%Y-%m-%dT%H:%M:%S.${us}Z", gmtime $t );
 
-    my $name        = join ".", $ctx->module, $ctx->method, $ctx->hostname, $ts;
+    my $name = join( ".", $ctx->module, $ctx->method, $ctx->hostname, $ts );
 
-    if ($dest && $dest =~ m,^/,) {
+    if ( $dest && $dest =~ m,^/, ) {
         #
         # File destination
         #
         my $fh;
-        if ($tag) {
+        if ( $tag ) {
             $tag =~ s,/,_,g;
             $dest = "$dest/$tag";
-            mkdir($dest) if ! -d $dest;
+            mkdir( $dest ) if !-d $dest;
         }
 
-        if ( open($fh, ">", "$dest/$name") ) {
-            $self->{file} = "$dest/$name";
-            $self->{dest} = $fh;
+        if ( open( $fh, ">", "$dest/$name" ) ) {
+            $self->{ file } = "$dest/$name";
+            $self->{ dest } = $fh;
         }
         else {
-            warn "Cannot open log file $dest/$name: $${empty_escaper}!";
+            warn "Cannot open log file $dest/$name: $!";
         }
     }
     else {
@@ -662,13 +623,13 @@ sub new {
         # Log to string.
         #
         my $stderr;
-        $self->{dest} = \$stderr;
+        $self->{ dest } = \$stderr;
     }
 
     bless $self, $class;
 
     for my $e ( sort { $a cmp $b } keys %ENV ) {
-        $self->log_cmd( $e, $ENV${empty_escaper}{ $e } );
+        $self->log_cmd( $e, $ENV{ $e } );
     }
     return $self;
 }
@@ -747,38 +708,36 @@ sub text_value {
 }
 
 unless ( caller ) {
-    my( $input_file, $output_file, $token ) = @ARGV;
+    my ( $input_file, $output_file, $token ) = @ARGV;
     my @dispatch;
-#foreach( $module in $modules )
     {
-        use ${module.impl_package_name};
-        my $obj = ${module.impl_package_name}->new;
-        push @dispatch, '${module.module_name}', $obj;
+        use PerlTest::PerlTestImpl;
+        my $obj = PerlTest::PerlTestImpl->new;
+        push( @dispatch, 'Basic' => $obj );
     }
-#end
     my %headers = (
-        Authorization   => $token,
-        CLI             => "1",
+        "Authorization" => $token,
+        "CLI"           => "1"
     );
-    my $server = ${server_package_name}->new(
-        instance_dispatch   => { @dispatch },
-        allow_get           => 0,
-        local_headers       => \%headers
+    my $server = PerlTest::PerlTestServer->new(
+        instance_dispatch => { @dispatch },
+        allow_get         => 0,
+        local_headers     => \%headers
     );
-
-    open ( my $fih, '<', $input_file )
-        or die "Could not open file '$input_file' " . $${empty_escaper}!;
+    open( my $fih, '<', $input_file )
+        or die "Could not open file '$input_file' " . $!;
 
     my $input = '';
-    while (<$fih>) {
+    while ( <$fih> ) {
         $input .= $_;
     }
     close $fih;
     my $output = $server->handle_input_cli( $input );
-    open ( my $foh, '>', $output_file )
-        or die "Could not open file '$output_file' $${empty_escaper}!";
+    open( my $foh, '>', $output_file )
+        or die "Could not open file '$output_file' $!";
     print $foh $output;
     close $foh;
 }
 
 1;
+

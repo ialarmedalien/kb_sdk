@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.lang.System;
 
 import org.apache.commons.lang.StringUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -49,7 +50,9 @@ public class ModuleBuilder {
     public static final String GLOBAL_SDK_HOME_ENV_VAR = "KB_SDK_HOME";
     public static final String DEFAULT_METHOD_STORE_URL = "https://appdev.kbase.us/services/narrative_method_store/rpc";
 
-    public static final String VERSION = "1.2.0-alien";
+    public static final long COMPILE_TIME = System.currentTimeMillis();
+
+    public static final String VERSION = "1.2.0-alien-" + Long.toString(COMPILE_TIME);
 
     public static void main(String[] args) throws Exception {
 

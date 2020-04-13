@@ -126,12 +126,9 @@ public class ModuleTester {
             TemplateFormatter.formatTemplate("module_run_bash", moduleContext, runBashSh);
         if (!runDockerSh.exists())
             TemplateFormatter.formatTemplate("module_run_docker", moduleContext, runDockerSh);
-        if (!testCfg.exists()) {
+        if (!testCfg.exists())
             TemplateFormatter.formatTemplate("module_test_cfg", moduleContext, testCfg);
-//            System.out.println("Set KBase account credentials in test_local/test.cfg and then " +
-//            		"test again");
-//            return 1;
-        }
+
         Properties props = new Properties();
         InputStream is = new FileInputStream(testCfg);
         try {
@@ -141,7 +138,6 @@ public class ModuleTester {
         }
 
         ConfigLoader cfgLoader = new ConfigLoader(props, true, "test_local/test.cfg", true);
-
 
         File workDir = new File(tlDir, "workdir");
         workDir.mkdir();

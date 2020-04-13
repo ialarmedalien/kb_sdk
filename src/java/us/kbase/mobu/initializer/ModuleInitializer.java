@@ -18,8 +18,6 @@ import us.kbase.templates.TemplateFormatter;
 
 public class ModuleInitializer {
     public static final String DEFAULT_LANGUAGE = "python";
-
-<<<<<<< HEAD
     private String moduleName;
     private String userName;
     private String language;

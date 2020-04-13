@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.lang.System;
 
 import org.apache.commons.lang.StringUtils;
 import org.yaml.snakeyaml.Yaml;

@@ -23,7 +23,6 @@ jobs:
       - name: Build with Ant
         run: |
           make
-          make sdkbase
           env
       - name: checking kb-sdk functions
         env:

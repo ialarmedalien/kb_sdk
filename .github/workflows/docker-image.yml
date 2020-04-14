@@ -31,14 +31,18 @@ jobs:
         run: |
           kb-sdk help
           kb-sdk init -l python -u user --example MyContigFilter
-          kb-sdk init -l perl -u user --example PerlExample
-          kb-sdk init -l perl -u user PerlBase
-          cd PerlExample
-          kb-sdk test
-          cd ../PerlBase
-          kb-sdk test
-          cd ../MyContigFilter
+          cd MyContigFilter
           make
+          kb-sdk test
+          cd ..
+          rm -rf MyContigFilter
+          kb-sdk init -l perl -u user PerlBase
+          cd PerlBase
+          kb-sdk test
+          cd ..
+          rm -rf PerlBase
+          kb-sdk init -l perl -u user --example PerlExample
+          cd PerlExample
           kb-sdk test
       - name: Build & Push to Docker Hub
         uses: opspresso/action-docker@master

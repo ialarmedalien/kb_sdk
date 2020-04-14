@@ -30,12 +30,6 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
           kb-sdk help
-          kb-sdk init -l python -u user --example MyContigFilter
-          cd MyContigFilter
-          make
-          kb-sdk test
-          cd ..
-          rm -rf MyContigFilter
           kb-sdk init -l perl -u user PerlBase
           cd PerlBase
           kb-sdk test
@@ -44,6 +38,13 @@ jobs:
           kb-sdk init -l perl -u user --example PerlExample
           cd PerlExample
           kb-sdk test
+          cd ..
+          rm -rf PerlExample
+          kb-sdk init -l python -u user --example MyContigFilter
+          cd MyContigFilter
+          make
+          kb-sdk test
+          cd ..
       - name: Build & Push to Docker Hub
         uses: opspresso/action-docker@master
         with:

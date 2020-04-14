@@ -6,7 +6,7 @@ on:
 
 jobs:
 
-  docker_build:
+  docker_build_and_test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -44,6 +44,14 @@ jobs:
           make
           kb-sdk test
           cd ..
+
+  push_to_dockerhub:
+    runs-on: ubuntu-latest
+    needs: docker_build_and_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Build & Push to Docker Hub
         uses: opspresso/action-docker@master
         with:

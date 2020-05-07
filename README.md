@@ -1,3 +1,4 @@
+![Docker Image CI](https://github.com/ialarmedalien/kb_sdk/workflows/Docker%20Image%20CI/badge.svg?branch=better_perl_and_tests)
 # ![alt text](https://avatars2.githubusercontent.com/u/1263946?v=3&s=84 "KBase") KBase SDK
 
 The KBase SDK is a set of tools for developing KBase Apps that can be dynamically registered and run on the KBase platform.  Apps are grouped into modules that include all code, dependencies, specification files, and documentation needed to define and run Apps in the KBase Narrative interface.

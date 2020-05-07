@@ -98,6 +98,7 @@ public class ConfigLoader {
                 secureCfgParams.put(paramName, props.getProperty(propName));
             }
         }
+        System.out.println("Setting auth URL to " + authUrl);
     }
 
     public String getAuthUrl() {

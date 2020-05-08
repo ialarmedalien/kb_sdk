@@ -54,10 +54,7 @@ public class ConfigLoader {
             tokenString = null;
         }
         if (tokenString == null) {
-<<<<<<< HEAD
             System.out.println("No token found in test.cfg file; checking environment");
-=======
->>>>>>> 9d43f8b... Use the environment token if one cannot be found in the test config
             String test_token = System.getenv("KBASE_TEST_TOKEN");
             if (test_token != null && !test_token.trim().isEmpty()) {
                 tokenString = test_token;
@@ -74,6 +71,9 @@ public class ConfigLoader {
                 new AuthConfig().withKBaseAuthServerURL(new URL(authUrl))
                 .withAllowInsecureURLs("true".equals(authAllowInsecure)));
         if (tokenString != null) {
+            System.out.println(
+                "checking auth credentials with auth server " + authUrl
+            );
             token = auth.validateToken(tokenString);
         } else {
             if (password == null || password.trim().isEmpty()) {

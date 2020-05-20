@@ -72,7 +72,7 @@ public class ConfigLoader {
                 .withAllowInsecureURLs("true".equals(authAllowInsecure)));
         if (tokenString != null) {
             System.out.println(
-                "checking auth credentials with auth server " + authUrl
+                "Checking auth credentials with auth server " + authUrl
             );
             token = auth.validateToken(tokenString);
         } else {
@@ -98,7 +98,6 @@ public class ConfigLoader {
                 secureCfgParams.put(paramName, props.getProperty(propName));
             }
         }
-        System.out.println("Setting auth URL to " + authUrl);
     }
 
     public String getAuthUrl() {

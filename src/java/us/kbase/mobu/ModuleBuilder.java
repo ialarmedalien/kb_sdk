@@ -384,7 +384,6 @@ public class ModuleBuilder {
         return propertyValue;
     }
 
-
     private static int runVersionCommand(VersionCommandArgs testArgs, JCommander jc) {
         // version was printed at start up, so just exit
         return 0;

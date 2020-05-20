@@ -141,7 +141,6 @@ public class ModuleTester {
 
         ConfigLoader cfgLoader = new ConfigLoader(props, true, "test_local/test.cfg", true);
 
-
         File workDir = new File(tlDir, "workdir");
         workDir.mkdir();
         File tokenFile = new File(workDir, "token");

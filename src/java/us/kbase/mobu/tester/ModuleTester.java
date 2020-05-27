@@ -142,7 +142,6 @@ public class ModuleTester {
 
         ConfigLoader cfgLoader = new ConfigLoader(props, true, "test_local/test.cfg", true);
 
-
         File workDir = new File(tlDir, "workdir");
         workDir.mkdir();
         File tokenFile = new File(workDir, "token");
@@ -172,56 +171,10 @@ public class ModuleTester {
             return 1;
         ///////////////////////////////////////////////////////////////////////////////////////////
         int callbackPort = NetUtils.findFreePort();
-        String[] callbackNetworks = null;
-        String callbackNetworksText = props.getProperty("callback_networks");
-        if (callbackNetworksText != null) {
-            callbackNetworks = callbackNetworksText.trim().split("\\s*,\\s*");
-            System.out.println("Custom network instarface list is defined: " +
-                    Arrays.asList(callbackNetworks));
-        }
-        URL callbackUrl = CallbackServer.getCallbackUrl(callbackPort, callbackNetworks);
+        URL callbackUrl = getCallbackServerURL(callbackPort, props);
         Server jettyServer = null;
         if (callbackUrl != null) {
-            if( System.getProperty("os.name").startsWith("Windows") ) {
-                JsonServerSyslog.setStaticUseSyslog(false);
-                JsonServerSyslog.setStaticMlogFile("callback.log");
-            }
-            CallbackServerConfig cfg = cfgLoader.buildCallbackServerConfig(callbackUrl,
-                    tlDir.toPath(), new LineLogger() {
-                @Override
-                public void logNextLine(String line, boolean isError) {
-                    if (isError) {
-                        System.err.println(line);
-                    } else {
-                        System.out.println(line);
-                    }
-                }
-            });
-            ModuleRunVersion runver = new ModuleRunVersion(
-                    new URL("https://localhost"),
-                    new ModuleMethod(moduleName + ".run_local_tests"),
-                    "local-docker-image", "local", "dev");
-            final DockerMountPoints mounts = new DockerMountPoints(
-                    Paths.get("/kb/module/work"), Paths.get("tmp"));
-            Map<String, String> localModuleToImage = new LinkedHashMap<>();
-            localModuleToImage.put(moduleName, imageName);
-            JsonServerServlet catalogSrv = new SDKCallbackServer(
-                    cfgLoader.getToken(), cfg, runver, new ArrayList<UObject>(),
-                    new ArrayList<String>(), mounts, localModuleToImage);
-            jettyServer = new Server(callbackPort);
-            ServletContextHandler context = new ServletContextHandler(
-                    ServletContextHandler.SESSIONS);
-            context.setContextPath("/");
-            jettyServer.setHandler(context);
-            context.addServlet(new ServletHolder(catalogSrv),"/*");
-            jettyServer.start();
-        } else {
-            if (callbackNetworks != null && callbackNetworks.length > 0) {
-                throw new IllegalStateException("No proper callback IP was found, " +
-                		"please check callback_networks parameter in test.cfg");
-            }
-            System.out.println("WARNING: No callback URL was received " +
-                    "by the job runner. Local callbacks are disabled.");
+            jettyServer = getCallbackServerRunning(callbackUrl, callbackPort, cfgLoader, tlDir, moduleName, imageName);
         }
         ///////////////////////////////////////////////////////////////////////////////////////////
         try {
@@ -246,6 +199,71 @@ public class ModuleTester {
                 jettyServer.stop();
             }
         }
+    }
+
+    public static URL getCallbackServerURL(int callbackPort, Properties props) throws Exception {
+        String[] callbackNetworks = null;
+        String callbackNetworksText = props.getProperty("callback_networks");
+        if (callbackNetworksText != null) {
+            callbackNetworks = callbackNetworksText.trim().split("\\s*,\\s*");
+            System.out.println("Custom network instarface list is defined: " +
+                    Arrays.asList(callbackNetworks));
+        }
+        URL callbackUrl = CallbackServer.getCallbackUrl(callbackPort, callbackNetworks);
+        if (callbackUrl == null) {
+            if (callbackNetworks != null && callbackNetworks.length > 0) {
+                throw new IllegalStateException("No proper callback IP was found, " +
+                        "please check callback_networks parameter in test.cfg");
+            }
+            System.out.println("WARNING: No callback URL was received " +
+                    "by the job runner. Local callbacks are disabled.");
+        }
+        return callbackUrl;
+    }
+
+    public static Server getCallbackServerRunning(URL callbackUrl, 
+        int callbackPort, 
+        ConfigLoader cfgLoader, 
+        File tlDir,  
+        String moduleName, 
+        String imageName) throws Exception {
+
+        Server jettyServer = null;
+        if( System.getProperty("os.name").startsWith("Windows") ) {
+            JsonServerSyslog.setStaticUseSyslog(false);
+            JsonServerSyslog.setStaticMlogFile("callback.log");
+        }
+        CallbackServerConfig cfg = cfgLoader.buildCallbackServerConfig(callbackUrl,
+                tlDir.toPath(), new LineLogger() {
+            @Override
+            public void logNextLine(String line, boolean isError) {
+                if (isError) {
+                    System.err.println(line);
+                } else {
+                    System.out.println(line);
+                }
+            }
+        });
+        ModuleRunVersion runver = new ModuleRunVersion(
+                new URL("https://localhost"),
+                new ModuleMethod(moduleName + ".run_local_tests"),
+                "local-docker-image", "local", "dev");
+        final DockerMountPoints mounts = new DockerMountPoints(
+                Paths.get("/kb/module/work"), Paths.get("tmp"));
+        Map<String, String> localModuleToImage = new LinkedHashMap<>();
+        localModuleToImage.put(moduleName, imageName);
+        JsonServerServlet catalogSrv = new SDKCallbackServer(
+                cfgLoader.getToken(), cfg, runver, new ArrayList<UObject>(),
+                new ArrayList<String>(), mounts, localModuleToImage);
+        jettyServer = new Server(callbackPort);
+        ServletContextHandler context = new ServletContextHandler(
+                ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+        jettyServer.setHandler(context);
+        context.addServlet(new ServletHolder(catalogSrv),"/*");
+        jettyServer.start();
+
+        return jettyServer;
     }
 
     public static boolean buildNewDockerImageWithCleanup(File moduleDir, File tlDir,

@@ -1,8 +1,7 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: [ better_perl_and_tests ]
+  [push, pull_request]
 
 jobs:
   dockerhub_push:

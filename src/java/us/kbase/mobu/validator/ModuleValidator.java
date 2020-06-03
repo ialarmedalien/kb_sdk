@@ -352,63 +352,61 @@ public class ModuleValidator {
         }
         JsonNode paramsMappingNode = get("behavior/service-mapping", serviceMappingNode, "input_mapping");
         Set<Integer> argsUsed = new TreeSet<Integer>();
-        if (paramsMappingNode.size() > 0) {
-            for (int j = 0; j < paramsMappingNode.size(); j++) {
-                JsonNode paramMappingNode = paramsMappingNode.get(j);
-                String path = "behavior/service-mapping/input_mapping/" + j;
-                JsonNode targetArgPosNode = paramMappingNode.get("target_argument_position");
-                int targetArgPos = 0;
-                if (targetArgPosNode != null && !targetArgPosNode.isNull())
-                    targetArgPos = targetArgPosNode.asInt();
-                if (targetArgPos >= func.getParameters().size()) {
-                    throw new IllegalStateException("  **ERROR** - value " + targetArgPos + " within " +
-                            "path [" + path + "/target_argument_position] in spec.json is out of " +
-                            "bounds (number of arguments defined for function \"" + methodName + "\" " +
-                            "is " + func.getParameters().size() + ")");
+        for (int j = 0; j < paramsMappingNode.size(); j++) {
+            JsonNode paramMappingNode = paramsMappingNode.get(j);
+            String path = "behavior/service-mapping/input_mapping/" + j;
+            JsonNode targetArgPosNode = paramMappingNode.get("target_argument_position");
+            int targetArgPos = 0;
+            if (targetArgPosNode != null && !targetArgPosNode.isNull())
+                targetArgPos = targetArgPosNode.asInt();
+            if (targetArgPos >= func.getParameters().size()) {
+                throw new IllegalStateException("  **ERROR** - value " + targetArgPos + " within " +
+                        "path [" + path + "/target_argument_position] in spec.json is out of " +
+                        "bounds (number of arguments defined for function \"" + methodName + "\" " +
+                        "is " + func.getParameters().size() + ")");
+            }
+            argsUsed.add(targetArgPos);
+            KbType argType = func.getParameters().get(targetArgPos).getType();
+            while (argType instanceof KbTypedef) {
+                KbTypedef ref = (KbTypedef)argType;
+                argType = ref.getAliasType();
+            }
+            JsonNode targetPropNode = paramMappingNode.get("target_property");
+            if (targetPropNode != null && !targetPropNode.isNull()) {
+                String targetProp = targetPropNode.asText();
+                if (argType instanceof KbScalar || argType instanceof KbList ||
+                        argType instanceof KbTuple) {
+                    throw new IllegalStateException("  **ERROR** - value " + targetProp + " within " +
+                            "path [" + path + "/target_property] in spec.json can't be applied to " +
+                            "type " + argType.getClass().getSimpleName() + " (defined for argument " +
+                            targetArgPos + ")");
                 }
-                argsUsed.add(targetArgPos);
-                KbType argType = func.getParameters().get(targetArgPos).getType();
-                while (argType instanceof KbTypedef) {
-                    KbTypedef ref = (KbTypedef)argType;
-                    argType = ref.getAliasType();
-                }
-                JsonNode targetPropNode = paramMappingNode.get("target_property");
-                if (targetPropNode != null && !targetPropNode.isNull()) {
-                    String targetProp = targetPropNode.asText();
-                    if (argType instanceof KbScalar || argType instanceof KbList ||
-                            argType instanceof KbTuple) {
-                        throw new IllegalStateException("  **ERROR** - value " + targetProp + " within " +
-                                "path [" + path + "/target_property] in spec.json can't be applied to " +
-                                "type " + argType.getClass().getSimpleName() + " (defined for argument " +
-                                targetArgPos + ")");
-                    }
-                    if (argType instanceof KbStruct) {
-                        KbStruct struct = (KbStruct)argType;
-                        boolean found = false;
-                        for (KbStructItem item : struct.getItems()) {
-                            if (item.getName() != null && item.getName().equals(targetProp)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            System.err.println("  **WARNINGS** - value \"" + targetProp + "\" within " +
-                                    "path [" + path + "/target_property] in spec.json doesn't match " +
-                                    "any field of structure defined as argument type" +
-                                    (struct.getName() != null ? (" (" + struct.getName() + ")") : ""));
+                if (argType instanceof KbStruct) {
+                    KbStruct struct = (KbStruct)argType;
+                    boolean found = false;
+                    for (KbStructItem item : struct.getItems()) {
+                        if (item.getName() != null && item.getName().equals(targetProp)) {
+                            found = true;
+                            break;
                         }
                     }
-                }
-                JsonNode inputParamObj = paramMappingNode.get("input_parameter");
-                if (inputParamObj != null && !inputParamObj.isNull()) {
-                    String inputParamId = inputParamObj.asText();
-                    if (!inputParamIdToType.containsKey(inputParamId)) {
-                        throw new IllegalStateException("  **ERROR** - value \"" + inputParamId + "\" " +
-                                "within path [" + path + "/input_parameter] in spec.json is not any " +
-                                "input ID listed in \"parameters\" block");
+                    if (!found) {
+                        System.err.println("  **WARNINGS** - value \"" + targetProp + "\" within " +
+                                "path [" + path + "/target_property] in spec.json doesn't match " +
+                                "any field of structure defined as argument type" +
+                                (struct.getName() != null ? (" (" + struct.getName() + ")") : ""));
                     }
-                    paramsUsed.add(inputParamId);
                 }
+            }
+            JsonNode inputParamObj = paramMappingNode.get("input_parameter");
+            if (inputParamObj != null && !inputParamObj.isNull()) {
+                String inputParamId = inputParamObj.asText();
+                if (!inputParamIdToType.containsKey(inputParamId)) {
+                    throw new IllegalStateException("  **ERROR** - value \"" + inputParamId + "\" " +
+                            "within path [" + path + "/input_parameter] in spec.json is not any " +
+                            "input ID listed in \"parameters\" block");
+                }
+                paramsUsed.add(inputParamId);
             }
         }
         if (func.getParameters().size() != argsUsed.size()) {

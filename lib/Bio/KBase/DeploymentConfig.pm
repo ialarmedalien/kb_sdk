@@ -1,8 +1,11 @@
 package Bio::KBase::DeploymentConfig;
 
 use strict;
+use warnings;
+
 use base 'Class::Accessor';
 use Config::Simple;
+use Ref::Util qw( is_hashref );
 
 __PACKAGE__->mk_accessors( qw( service_name settings ) );
 
@@ -50,14 +53,10 @@ A hash reference containing the default values for the service parameters.
 sub new {
     my ( $class, $service_name, $defaults ) = @_;
 
-    if ( ( my $n = $ENV{ KB_SERVICE_NAME } ) ne "" ) {
-      $service_name = $n;
-    }
+    $service_name   = $ENV{ KB_SERVICE_NAME } if $ENV{ KB_SERVICE_NAME };
 
-    my $settings = {};
-    if ( ref( $defaults ) ) {
-      %$settings = %$defaults;
-    }
+    my $settings    = {};
+    %$settings      = %$defaults if $defaults && is_hashref $defaults;
 
     my $cfg_file    = $ENV{ KB_DEPLOYMENT_CONFIG };
     if ( -e $cfg_file ) {

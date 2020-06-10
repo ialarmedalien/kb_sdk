@@ -431,18 +431,19 @@ sub _syslog {
 sub _log {
     my ( $self, $ident, $message ) = @_;
     my $time = POSIX::strftime( "%Y-%m-%d %H:%M:%S", localtime );
-    my $msg  = join( " ", $time, hostname(), $ident . ": " );
-    open LOG, ">>" . $self->get_log_file()
-        || warn "Could not print log message $msg to " . $self->get_log_file() . "\n";
-    if ( ref( $message ) eq 'ARRAY' ) {
-        foreach my $m ( @{ $message } ) {
-            print LOG $msg . "$m\n";
+    my $msg  = join " ", $time, hostname(), $ident . ": ";
+    open my $log, ">>", $self->get_log_file()
+        or warn "Could not print log message $msg to " . $self->get_log_file() . ": $!\n";
+    if ( $log ) {
+        if ( ref $message eq 'ARRAY' ) {
+            foreach my $m ( @{ $message } ) {
+                print { $log } $msg . "$m\n";
+            }
+        }
+        else {
+            print { $log } $msg . "$message\n";
         }
     }
-    else {
-        print LOG $msg . "$message\n";
-    }
-    close LOG;
 }
 
 sub log_message {

@@ -59,6 +59,7 @@ jobs:
           kb-sdk test
 
   test_builds:
+    needs: kb_sdk_build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

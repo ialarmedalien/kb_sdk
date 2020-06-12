@@ -23,7 +23,6 @@ jobs:
       - name: Build with Ant
         run: |
           make
-          env
 
       - name: Upload kb-sdk build
         uses: actions/upload-artifact@v2
@@ -39,24 +38,6 @@ jobs:
         run: |
           kb-sdk help
           kb-sdk version
-          kb-sdk init -l perl -u user PerlBase
-          cd PerlBase
-          kb-sdk test
-          cd ..
-          rm -rf PerlBase
-          kb-sdk init -l perl -u user --example PerlExample
-          cd PerlExample
-          kb-sdk test
-          cd ..
-          rm -rf PerlExample
-          kb-sdk init -l python -u user --example PythonExample
-          cd PythonExample
-          make
-          kb-sdk test
-          cd ..
-          kb-sdk init -l java -u user --example JavaExample
-          cd JavaExample
-          kb-sdk test
 
   test_builds:
     needs: kb_sdk_build

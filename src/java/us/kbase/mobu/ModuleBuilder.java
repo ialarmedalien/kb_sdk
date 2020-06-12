@@ -374,12 +374,11 @@ public class ModuleBuilder {
             InputStream is = ModuleBuilder.class.getResourceAsStream("git.properties");
             gitProps.load(is);
             is.close();
-            gitCommit = gitProps.getProperty(propertyToGet);
+            propertyValue = gitProps.getProperty(propertyToGet);
         } catch (Exception e) {
             showError("Error while retrieving version information", e.getMessage());
-            return 1;
         }
-        return gitCommit;
+        return propertyValue;
     }
 
 

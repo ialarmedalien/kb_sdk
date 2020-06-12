@@ -39,8 +39,12 @@ jobs:
           kb-sdk test
           cd ..
           rm -rf PerlExample
-          kb-sdk init -l python -u user --example MyContigFilter
-          cd MyContigFilter
+          kb-sdk init -l python -u user --example PythonExample
+          cd PythonExample
           make
           kb-sdk test
           cd ..
+          rm -rf PythonExample
+          kb-sdk init -l java -u user --example JavaExample
+          cd JavaExample
+          kb-sdk test

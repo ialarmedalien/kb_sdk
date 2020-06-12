@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest, ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
-        language: [java, perl, python]
+        language: [perl, python]
 
     steps:
       - name: Checkout
@@ -22,14 +22,15 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Build with Ant
+        run: |
+          env
+          which ant
+          make
+
       - name: Add bin to $PATH
         run: |
           echo "::add-path::$GITHUB_WORKSPACE/bin"
-
-      - name: Build with Ant
-        run: |
-          which ant
-          make
 
       - name: checking kb-sdk functions
         env:
@@ -64,13 +65,14 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Build with Ant
+        run: |
+          env
+          make
+
       - name: Add bin to $PATH
         run: |
           echo "::add-path::$GITHUB_WORKSPACE/bin"
-
-      - name: Build with Ant
-        run: |
-          make
 
       - name: checking basic kb-sdk functions
         run: |
@@ -90,8 +92,11 @@ jobs:
         run: |
           cd kbase_app
           kb-sdk test
+          cd ..
 
       - name: repo init checks
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
           kb-sdk init -l java -u user BaseApp
           cd BaseApp

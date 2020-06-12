@@ -1,4 +1,4 @@
-name: Basic kb-sdk tests
+name: Basic compilation test
 
 on:
   [push, pull_request]
@@ -23,5 +23,4 @@ jobs:
 
       - name: Build with Ant
         run: |
-          which ant
           make

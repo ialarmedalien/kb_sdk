@@ -120,6 +120,7 @@ jobs:
           make build-test-script
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
+          cd ..
 
       - name: Checkout existing kbase modules and run tests
         uses: actions/checkout@v2
@@ -136,4 +137,3 @@ jobs:
           make build-test-script
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
-          cd ..

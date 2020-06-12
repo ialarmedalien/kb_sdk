@@ -58,7 +58,6 @@ public class ModuleBuilder {
         JCommander jc = new JCommander(gArgs);
         jc.setProgramName(MODULE_BUILDER_SH_NAME);
 
-
         // add the 'init' command
         InitCommandArgs initArgs = new InitCommandArgs();
         jc.addCommand(INIT_COMMAND, initArgs);
@@ -94,6 +93,9 @@ public class ModuleBuilder {
         // add the 'run' command
         RunCommandArgs runArgs = new RunCommandArgs();
         jc.addCommand(RUN_COMMAND, runArgs);
+
+        System.out.println("starting kb-sdk");
+        printVersion();
 
         // parse the arguments and gracefully catch any errors
         try {
@@ -137,6 +139,9 @@ public class ModuleBuilder {
         } else if (jc.getParsedCommand().equals(RUN_COMMAND)) {
             returnCode = runRunCommand(runArgs, jc);
         }
+
+        System.out.println("kb-sdk finished");
+        printVersion();
 
         if(returnCode!=0) {
             System.exit(returnCode);

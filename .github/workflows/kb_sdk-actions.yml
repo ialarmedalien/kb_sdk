@@ -26,6 +26,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install ant
+          brew install docker
 
       - name: Build with Ant
         run: |
@@ -40,13 +41,22 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
         run: |
-          env
           kb-sdk help
           kb-sdk version
+      - name: init and test base repo
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          LANGUAGE_TOKEN: ${{ matrix.language }}
+        run: |
           kb-sdk init -l $LANGUAGE_TOKEN -u user BaseApp
           cd BaseApp
           kb-sdk test
           cd ..
+      - name: init and test example repo
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          LANGUAGE_TOKEN: ${{ matrix.language }}
+        run: |
           kb-sdk init -l $LANGUAGE_TOKEN -u user --example ExampleApp
           cd ExampleApp
           kb-sdk test
@@ -72,6 +82,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install ant
+          brew install docker
 
       - name: Build with Ant
         run: |
@@ -86,6 +97,29 @@ jobs:
           env
           kb-sdk help
           kb-sdk version
+
+      - name: init and test Java base repo
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+        run: |
+          kb-sdk init -l java -u user BaseApp
+          cd BaseApp
+          kb-sdk validate || true
+          make build-test-script
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+          kb-sdk test
+          cd ..
+
+      - name: init and test Java example repo
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+        run: |
+          kb-sdk init -l java -u user --example ExampleApp
+          cd ExampleApp
+          kb-sdk validate || true
+          make build-test-script
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+          kb-sdk test
 
       - name: Checkout existing kbase modules and run tests
         uses: actions/checkout@v2
@@ -103,22 +137,3 @@ jobs:
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
           cd ..
-
-      - name: repo init checks
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-        run: |
-          kb-sdk init -l java -u user BaseApp
-          cd BaseApp
-          kb-sdk validate || true
-          make build-test-script
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk validate
-          cd ..
-          kb-sdk init -l java -u user --example ExampleApp
-          cd ExampleApp
-          kb-sdk validate || true
-          make build-test-script
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk validate
-

@@ -80,9 +80,9 @@ jobs:
 
       - name: Checkout existing kbase modules and run tests
         uses: actions/checkout@v2
-          with:
-            repository: kbaseapps/${{ matrix.app }}
-            path: kbase_app
+        with:
+          repository: kbaseapps/${{ matrix.app }}
+          path: kbase_app
 
       - name: run repo tests
         env:

@@ -24,12 +24,6 @@ jobs:
         run: |
           make
 
-      - name: Upload kb-sdk build
-        uses: actions/upload-artifact@v2
-        with:
-          name: kb-sdk_build
-          path: bin/kb-sdk
-
       - name: checking kb-sdk functions
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
@@ -60,14 +54,9 @@ jobs:
         run: |
           echo "::add-path::$GITHUB_WORKSPACE/bin"
 
-      - name: Download kb-sdk build
-        uses: actions/download-artifact@v2
-        with:
-          name: kb-sdk_build
-          path: bin/kb-sdk
-
-      - name: Display structure of downloaded files
-        run: ls -R
+      - name: Build with Ant
+        run: |
+          make
 
       - name: checking kb-sdk functions
         env:

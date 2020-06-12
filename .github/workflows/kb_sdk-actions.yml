@@ -5,7 +5,7 @@ on:
 
 jobs:
 
-  test_builds:
+  test_kb-sdk_builds:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -22,10 +22,13 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Install Ant
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install ant
+
       - name: Build with Ant
         run: |
-          env
-          which ant
           make
 
       - name: Add bin to $PATH
@@ -53,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
+        os: [macos-latest, ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
         app: [HTMLFileSetServ, WsLargeDataIO]
 
     steps:
@@ -65,9 +68,13 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Install Ant
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install ant
+
       - name: Build with Ant
         run: |
-          env
           make
 
       - name: Add bin to $PATH
@@ -91,6 +98,9 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
           cd kbase_app
+          kb-sdk test || true
+          make build-test-script
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
           cd ..
 
@@ -100,9 +110,15 @@ jobs:
         run: |
           kb-sdk init -l java -u user BaseApp
           cd BaseApp
+          kb-sdk validate || true
+          make build-test-script
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk validate
           cd ..
           kb-sdk init -l java -u user --example ExampleApp
           cd ExampleApp
+          kb-sdk validate || true
+          make build-test-script
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk validate
 

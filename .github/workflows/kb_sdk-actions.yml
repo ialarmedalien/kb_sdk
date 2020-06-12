@@ -36,11 +36,11 @@ jobs:
         run: |
           kb-sdk help
           kb-sdk version
-          kb-sdk init -l $LANGUAGE_TOKEN BaseApp
+          kb-sdk init -l $LANGUAGE_TOKEN -u user BaseApp
           cd BaseApp
           kb-sdk test
           cd ..
-          kb-sdk init -l $LANGUAGE_TOKEN --example ExampleApp
+          kb-sdk init -l $LANGUAGE_TOKEN -u user --example ExampleApp
           cd ExampleApp
           kb-sdk test
 

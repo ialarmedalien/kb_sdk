@@ -66,8 +66,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
-        app: [HTMLFileSetServ, WsLargeDataIO]
+#        os: [macos-latest, ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
+        os: [ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
+#        HTMLFileSetServ requires two different user tokens
+#        app: [HTMLFileSetServ, WsLargeDataIO]
+        app: [WsLargeDataIO]
 
     steps:
       - name: Checkout
@@ -107,7 +110,8 @@ jobs:
           kb-sdk validate || true
           make build-test-script
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk test
+          kb-sdk validate
+          kb-sdk test -s
           cd ..
 
       - name: init and test Java example repo

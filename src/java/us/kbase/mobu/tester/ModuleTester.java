@@ -321,7 +321,11 @@ public class ModuleTester {
             File runDockerSh) throws Exception {
         String scriptPath = DirUtils.getFilePath(runDockerSh);
         String repoPath = DirUtils.getFilePath(repoDir);
-        Process p = Runtime.getRuntime().exec(new String[] {"bash",
+
+        String Path = System.getenv("PATH");
+        Process p = Runtime.getRuntime().exec(new String[] {
+                "PATH=" + Path + ":$PATH",
+                "bash",
                 scriptPath, "build", "--rm", "-t",
                 targetImageName, repoPath});
         List<Thread> workers = new ArrayList<Thread>();

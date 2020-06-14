@@ -323,11 +323,17 @@ public class ModuleTester {
         String repoPath = DirUtils.getFilePath(repoDir);
 
         String Path = System.getenv("PATH");
-        Process p = Runtime.getRuntime().exec(new String[] {
-                "PATH=" + Path + ":$PATH",
+        Process p = Runtime.getRuntime().exec(
+            new String[] {
                 "bash",
                 scriptPath, "build", "--rm", "-t",
-                targetImageName, repoPath});
+                targetImageName, repoPath
+            },
+            // carry over the path from the calling env
+            new String[] {
+                "PATH=" + Path + ":$PATH"
+            }
+        );
         List<Thread> workers = new ArrayList<Thread>();
         InputStream[] inputStreams = new InputStream[] {p.getInputStream(), p.getErrorStream()};
         final String[] cntIdToDelete = {null};

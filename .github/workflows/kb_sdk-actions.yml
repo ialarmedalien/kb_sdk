@@ -103,24 +103,26 @@ jobs:
       - name: init and test Java base repo
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          KB_SDK_GITHUB_URL: https://github.com/${{ GITHUB_REPOSITORY }}
+          KB_SDK_GIT_BRANCH: ${{ GITHUB_SHA }}
+
         run: |
           kb-sdk init -l java -u user BaseApp
           cd BaseApp
           kb-sdk validate || true
-          make build-test-script
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk validate
           kb-sdk test
           cd ..
 
       - name: init and test Java example repo
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          KB_SDK_GITHUB_URL: https://github.com/${{ GITHUB_REPOSITORY }}
+          KB_SDK_GIT_BRANCH: ${{ GITHUB_SHA }}
         run: |
           kb-sdk init -l java -u user --example ExampleApp
           cd ExampleApp
           kb-sdk validate || true
-          make build-test-script
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
           cd ..
@@ -134,9 +136,11 @@ jobs:
       - name: run repo tests
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
+          KB_SDK_GITHUB_URL: https://github.com/${{ GITHUB_REPOSITORY }}
+          KB_SDK_GIT_BRANCH: ${{ GITHUB_SHA }}
         run: |
           cd kbase_app
-          kb-sdk test || true
-          make build-test-script
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+          kb-sdk validate || true
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN\ntest_user2_token=$KBASE_TEST_TOKEN_USER_2/" test_local/test.cfg
           kb-sdk test

@@ -59,6 +59,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
+          path: SampleApp
 
       - name: test example repo
         env:
@@ -169,6 +170,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: kbaseapp-${{ matrix.app }}-${{ matrix.os }}
+          path: .
 
       - name: run test
         env:

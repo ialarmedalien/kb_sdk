@@ -150,7 +150,7 @@ jobs:
           kb-sdk test || true
 
       - name: edit test.cfg
-        if: matrix.app == HTMLFileSetServ
+        if: matrix.app == 'HTMLFileSetServ'
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
@@ -159,7 +159,7 @@ jobs:
           sed -i "s/appdev/ci/" test_local/test.cfg
 
       - name: edit test.cfg
-        if: matrix.app == WsLargeDataIO
+        if: matrix.app == 'WsLargeDataIO'
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |

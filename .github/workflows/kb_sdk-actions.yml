@@ -41,41 +41,36 @@ jobs:
           kb-sdk help
           kb-sdk version
 
-      - name: init and test base repo
+      - name: init base repo
         if: matrix.test_type == 'base'
         env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
         run: |
-          kb-sdk init -l $LANGUAGE_TOKEN -u user BaseApp
-          cd BaseApp
-          kb-sdk test || true
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk test
-          cd ..
+          kb-sdk init -l $LANGUAGE_TOKEN -u user SampleApp
 
-      - name: init and test example repo
+      - name: init example repo
         if: matrix.test_type == 'example'
+        env:
+          LANGUAGE_TOKEN: ${{ matrix.language }}
+        run: |
+          kb-sdk init -l $LANGUAGE_TOKEN -u user --example SampleApp
+
+      - name: make resulting app available as artefact
+        uses: actions/upload-artifact@v2
+        with:
+          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
+
+      - name: test example repo
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
           KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
           KB_SDK_GIT_BRANCH: $GITHUB_SHA
         run: |
-          kb-sdk init -l $LANGUAGE_TOKEN -u user --example ExampleApp
-          cd ExampleApp
+          cd SampleApp
           kb-sdk test || true
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
-          cd ..
-
-      - name: make resulting app available as artefact
-      #  if: ${{ failure() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}
 
   test_java_repos:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
@@ -125,26 +120,26 @@ jobs:
 #          kb-sdk test
 #          cd ..
 #
-      - name: init and test Java example repo
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
-        run: |
-          kb-sdk init -l java -u user --example ExampleApp
-          cd ExampleApp
-          kb-sdk validate || true
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk test
-          cd ..
+#      - name: init and test Java example repo
+#        env:
+#          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+#          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+#          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+#        run: |
+#          kb-sdk init -l java -u user --example ExampleApp
+#          cd ExampleApp
+#          kb-sdk validate || true
+#          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+#          kb-sdk test
+#          cd ..
 
-      - name: Checkout existing kbase modules and run tests
+      - name: Checkout existing kbase module ${{ matrix.app }}
         uses: actions/checkout@v2
         with:
           repository: kbaseapps/${{ matrix.app }}
           path: kbase_app
 
-      - name: run repo tests
+      - name: prep for repo tests
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
@@ -153,5 +148,33 @@ jobs:
         run: |
           cd kbase_app
           kb-sdk test || true
+
+      - name: edit test.cfg
+        if: matrix.app == HTMLFileSetServ
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
+        run: |
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN\ntest_user2_token=$KBASE_TEST_TOKEN_USER_2/" test_local/test.cfg
+          sed -i "s/appdev/ci/" test_local/test.cfg
+
+      - name: edit test.cfg
+        if: matrix.app == WsLargeDataIO
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+        run: |
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+
+      - name: make resulting app available as artefact
+        uses: actions/upload-artifact@v2
+        with:
+          name: kbaseapp-${{ matrix.app }}-${{ matrix.os }}
+
+      - name: run test
+        env:
+          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
+          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+        run: |
           kb-sdk test

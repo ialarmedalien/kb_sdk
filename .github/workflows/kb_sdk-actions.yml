@@ -6,12 +6,14 @@ on:
 jobs:
 
   test_kb-sdk_builds:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
-        language: [perl, python]
+        language: [perl, python, java]
+        test_type: [base, example]
 
     steps:
       - name: Checkout
@@ -21,12 +23,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-
-      - name: Install Ant
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew install ant
-          brew install docker
 
       - name: Build with Ant
         run: |
@@ -41,27 +37,48 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
         run: |
+          env
           kb-sdk help
           kb-sdk version
+
       - name: init and test base repo
+        if: matrix.test_type == 'base'
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
+          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GIT_BRANCH: $GITHUB_SHA
         run: |
           kb-sdk init -l $LANGUAGE_TOKEN -u user BaseApp
           cd BaseApp
+          kb-sdk test || true
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
           cd ..
+
       - name: init and test example repo
+        if: matrix.test_type == 'example'
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
+          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GIT_BRANCH: $GITHUB_SHA
         run: |
           kb-sdk init -l $LANGUAGE_TOKEN -u user --example ExampleApp
           cd ExampleApp
+          kb-sdk test || true
+          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
+          cd ..
+
+      - name: make resulting app available as artefact
+      #  if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}
 
   test_java_repos:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -80,12 +97,6 @@ jobs:
         with:
           java-version: 1.8
 
-      - name: Install Ant
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew install ant
-          brew install docker
-
       - name: Build with Ant
         run: |
           make
@@ -100,20 +111,20 @@ jobs:
           kb-sdk help
           kb-sdk version
 
-      - name: init and test Java base repo
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
-
-        run: |
-          kb-sdk init -l java -u user BaseApp
-          cd BaseApp
-          kb-sdk validate || true
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-          kb-sdk test
-          cd ..
-
+#      - name: init and test Java base repo
+#        env:
+#          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
+#          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+#          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+#
+#        run: |
+#          kb-sdk init -l java -u user BaseApp
+#          cd BaseApp
+#          kb-sdk validate || true
+#          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
+#          kb-sdk test
+#          cd ..
+#
       - name: init and test Java example repo
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}

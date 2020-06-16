@@ -59,8 +59,6 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
-          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd SampleApp
           kb-sdk test || true
@@ -83,8 +81,8 @@ jobs:
       matrix:
         os: [ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
 #        HTMLFileSetServ requires two different user tokens
-        app: [HTMLFileSetServ, WsLargeDataIO]
-#        app: [WsLargeDataIO]
+#        app: [HTMLFileSetServ, WsLargeDataIO]
+        app: [WsLargeDataIO]
 
     steps:
       - name: Checkout
@@ -119,8 +117,6 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
-          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd kbase_app
           kb-sdk test || true
@@ -149,8 +145,6 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
-          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
-          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd kbase_app
           kb-sdk test

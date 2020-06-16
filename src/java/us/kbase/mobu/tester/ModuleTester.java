@@ -321,17 +321,11 @@ public class ModuleTester {
             File runDockerSh) throws Exception {
         String scriptPath = DirUtils.getFilePath(runDockerSh);
         String repoPath = DirUtils.getFilePath(repoDir);
-
-        String Path = System.getenv("PATH");
         String github_repo = System.getenv("GITHUB_REPOSITORY");
         String github_sha = System.getenv("GITHUB_SHA");
-        String kb_sdk_repo = System.getenv("KB_SDK_GITHUB_REPOSITORY");
-        String kb_sdk_commit = System.getenv("KB_SDK_GIT_COMMIT");
-        System.out.println("PATH: " + Path
-          + "; github_repo: " + github_repo
+        System.out.println(
+          "github_repo: " + github_repo
           + "; github_sha: " + github_sha
-          + "; kb_sdk_repo: " + kb_sdk_repo
-          + "; kb_sdk_commit: " + kb_sdk_commit
         );
         Process p = Runtime.getRuntime().exec(
             new String[] {
@@ -341,9 +335,8 @@ public class ModuleTester {
             },
             // carry over the path from the calling env
             new String[] {
-                "PATH=" + Path + ":$PATH",
-//                 "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
-//                 "KB_SDK_GIT_COMMIT=" + github_sha,
+                 "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
+                 "KB_SDK_GIT_COMMIT=" + github_sha,
             }
         );
         List<Thread> workers = new ArrayList<Thread>();

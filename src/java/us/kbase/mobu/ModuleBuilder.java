@@ -140,9 +140,6 @@ public class ModuleBuilder {
             returnCode = runRunCommand(runArgs, jc);
         }
 
-        System.out.println("kb-sdk finished");
-        printVersion();
-
         if(returnCode!=0) {
             System.exit(returnCode);
         }

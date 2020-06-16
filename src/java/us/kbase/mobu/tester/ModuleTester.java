@@ -342,8 +342,8 @@ public class ModuleTester {
             // carry over the path from the calling env
             new String[] {
                 "PATH=" + Path + ":$PATH",
-                "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
-                "KB_SDK_GIT_COMMIT=" + git_commit,
+//                 "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
+//                 "KB_SDK_GIT_COMMIT=" + github_sha,
             }
         );
         List<Thread> workers = new ArrayList<Thread>();

@@ -131,6 +131,8 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
         run: |
+          pwd
+          ls -al
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN\ntest_user2_token=$KBASE_TEST_TOKEN_USER_2/" test_local/test.cfg
           sed -i "s/appdev/ci/" test_local/test.cfg
 
@@ -155,4 +157,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
-          path: SampleApp
+          path: kbase_app

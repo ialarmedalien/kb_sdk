@@ -331,6 +331,7 @@ public class ModuleTester {
         if (git_commit == null) {
             git_commit = "";
         }
+        System.out.println("PATH: " + Path + "; github_repo: " + github_repo + "; git commit: " + git_commit);
         Process p = Runtime.getRuntime().exec(
             new String[] {
                 "bash",

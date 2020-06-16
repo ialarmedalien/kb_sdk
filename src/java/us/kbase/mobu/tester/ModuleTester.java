@@ -321,23 +321,12 @@ public class ModuleTester {
             File runDockerSh) throws Exception {
         String scriptPath = DirUtils.getFilePath(runDockerSh);
         String repoPath = DirUtils.getFilePath(repoDir);
-        String github_repo = System.getenv("GITHUB_REPOSITORY");
-        String github_sha = System.getenv("GITHUB_SHA");
-        System.out.println(
-          "github_repo: " + github_repo
-          + "; github_sha: " + github_sha
-        );
         Process p = Runtime.getRuntime().exec(
             new String[] {
                 "bash",
                 scriptPath, "build", "--rm", "-t",
                 targetImageName, repoPath
             },
-            // carry over the path from the calling env
-            new String[] {
-                 "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
-                 "KB_SDK_GIT_COMMIT=" + github_sha,
-            }
         );
         List<Thread> workers = new ArrayList<Thread>();
         InputStream[] inputStreams = new InputStream[] {p.getInputStream(), p.getErrorStream()};

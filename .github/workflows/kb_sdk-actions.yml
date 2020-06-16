@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
+        os: [ubuntu-16.04, ubuntu-18.04, ubuntu-20.04]
         language: [perl, python, java]
         test_type: [base, example]
 
@@ -73,16 +73,14 @@ jobs:
           path: SampleApp
 
 
-  test_java_repos:
+  test_existing_repos:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-16.04, ubuntu-latest, ubuntu-20.04]
-#        HTMLFileSetServ requires two different user tokens
-#        app: [HTMLFileSetServ, WsLargeDataIO]
-        app: [WsLargeDataIO]
+        os: [ubuntu-16.04, ubuntu-18.04, ubuntu-20.04]
+        app: [WsLargeDataIO, KBaseReport]
 
     steps:
       - name: Checkout
@@ -114,27 +112,11 @@ jobs:
           path: kbase_app
 
       - name: prep for repo tests
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
         run: |
           cd kbase_app
           kb-sdk test || true
 
       - name: edit test.cfg
-        if: matrix.app == 'HTMLFileSetServ'
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
-        run: |
-          cd kbase_app
-          pwd
-          ls -al
-          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN\ntest_user2_token=$KBASE_TEST_TOKEN_USER_2/" test_local/test.cfg
-          sed -i "s/appdev/ci/" test_local/test.cfg
-
-      - name: edit test.cfg
-        if: matrix.app == 'WsLargeDataIO'
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
@@ -142,9 +124,6 @@ jobs:
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
 
       - name: run test
-        env:
-          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-          KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
         run: |
           cd kbase_app
           kb-sdk test

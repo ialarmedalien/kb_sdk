@@ -55,23 +55,25 @@ jobs:
         run: |
           kb-sdk init -l $LANGUAGE_TOKEN -u user --example SampleApp
 
-      - name: make resulting app available as artefact
-        uses: actions/upload-artifact@v2
-        with:
-          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
-          path: SampleApp
-
-      - name: test example repo
+      - name: test ${{ matrix.test_type }} repo
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
           KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd SampleApp
           kb-sdk test || true
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
           kb-sdk test
+
+      - name: make resulting app available as artefact in case of failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
+          path: SampleApp
+
 
   test_java_repos:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
@@ -107,33 +109,6 @@ jobs:
           kb-sdk help
           kb-sdk version
 
-#      - name: init and test Java base repo
-#        env:
-#          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-#          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-#          KB_SDK_GIT_BRANCH: $GITHUB_SHA
-#
-#        run: |
-#          kb-sdk init -l java -u user BaseApp
-#          cd BaseApp
-#          kb-sdk validate || true
-#          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-#          kb-sdk test
-#          cd ..
-#
-#      - name: init and test Java example repo
-#        env:
-#          KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
-#          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-#          KB_SDK_GIT_BRANCH: $GITHUB_SHA
-#        run: |
-#          kb-sdk init -l java -u user --example ExampleApp
-#          cd ExampleApp
-#          kb-sdk validate || true
-#          sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
-#          kb-sdk test
-#          cd ..
-
       - name: Checkout existing kbase module ${{ matrix.app }}
         uses: actions/checkout@v2
         with:
@@ -145,7 +120,7 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
           KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd kbase_app
           kb-sdk test || true
@@ -166,17 +141,18 @@ jobs:
         run: |
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
 
-      - name: make resulting app available as artefact
-        uses: actions/upload-artifact@v2
-        with:
-          name: kbaseapp-${{ matrix.app }}-${{ matrix.os }}
-          path: .
-
       - name: run test
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
           KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
-          KB_SDK_GIT_BRANCH: $GITHUB_SHA
+          KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           kb-sdk test
+
+      - name: make resulting app available as artefact in case of failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
+          path: SampleApp

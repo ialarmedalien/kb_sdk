@@ -323,14 +323,8 @@ public class ModuleTester {
         String repoPath = DirUtils.getFilePath(repoDir);
 
         String Path = System.getenv("PATH");
-        String github_repo = System.getenv("KB_SDK_GITHUB_URL");
-        if (github_repo == null) {
-            github_repo = "";
-        }
-        String git_commit = System.getenv("KBSDK_GIT_COMMIT");
-        if (git_commit == null) {
-            git_commit = "";
-        }
+        String github_repo = System.getenv("KB_SDK_GITHUB_REPOSITORY");
+        String git_commit = System.getenv("KB_SDK_GIT_COMMIT");
         System.out.println("PATH: " + Path + "; github_repo: " + github_repo + "; git commit: " + git_commit);
         Process p = Runtime.getRuntime().exec(
             new String[] {
@@ -341,7 +335,7 @@ public class ModuleTester {
             // carry over the path from the calling env
             new String[] {
                 "PATH=" + Path + ":$PATH",
-                "KB_SDK_GITHUB_URL=" + github_repo,
+                "KB_SDK_GITHUB_REPOSITORY=" + github_repo,
                 "KB_SDK_GIT_COMMIT=" + git_commit,
             }
         );

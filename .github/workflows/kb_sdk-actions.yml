@@ -59,7 +59,7 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           LANGUAGE_TOKEN: ${{ matrix.language }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
           KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd SampleApp
@@ -119,7 +119,7 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
           KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
           cd kbase_app
@@ -131,6 +131,7 @@ jobs:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
         run: |
+          cd kbase_app
           pwd
           ls -al
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN\ntest_user2_token=$KBASE_TEST_TOKEN_USER_2/" test_local/test.cfg
@@ -141,20 +142,22 @@ jobs:
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
         run: |
+          cd kbase_app
           sed -i "s/test_token=/test_token=$KBASE_TEST_TOKEN/" test_local/test.cfg
 
       - name: run test
         env:
           KBASE_TEST_TOKEN: ${{ secrets.KBASE_TEST_TOKEN }}
           KBASE_TEST_TOKEN_USER_2: ${{ secrets.KBASE_TEST_TOKEN_USER_2 }}
-          KB_SDK_GITHUB_URL: https://github.com/$GITHUB_REPOSITORY
+          KB_SDK_GITHUB_REPOSITORY: $GITHUB_REPOSITORY
           KB_SDK_GIT_COMMIT: $GITHUB_SHA
         run: |
+          cd kbase_app
           kb-sdk test
 
       - name: make resulting app available as artefact in case of failure
         if: ${{ failure() }}
         uses: actions/upload-artifact@v2
         with:
-          name: kbaseapp-${{ matrix.language }}-${{ matrix.test_type }}-${{ matrix.os }}
+          name: kbaseapp-${{ matrix.app }}-${{ matrix.os }}
           path: kbase_app

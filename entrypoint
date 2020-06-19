@@ -1,6 +1,8 @@
 #!/bin/sh
 if [ "z$1" = "zshell" ] ; then
     exec $DSHELL -l
+elif [ "z$1" = "zbash" ] ; then
+    bash
 elif [ "z$1" = "zsetup" ] ; then
     cat << EOF
 G=\$(docker run -i -v /var/run/docker.sock:/var/run/docker.sock --entrypoint ls kbase/kb-sdk -l /var/run/docker.sock|awk '{print \$4}');

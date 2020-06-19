@@ -31,7 +31,10 @@ public class ModuleInitializer {
                                         "test",
                                         "ui",
                                         "ui/narrative",
-                                        "ui/narrative/methods"};
+                                        "ui/narrative/methods",
+                                        ".github",
+                                        ".github/workflows"
+                                        };
 
     public ModuleInitializer(String moduleName, String userName, boolean verbose) {
         this(moduleName, userName, DEFAULT_LANGUAGE, verbose);
@@ -78,6 +81,10 @@ public class ModuleInitializer {
         else {
             subdirList.add("ui/narrative/methods/run_" + this.moduleName);
             subdirList.add("ui/narrative/methods/run_" + this.moduleName + "/img");
+        }
+
+        if (this.language.equals("perl")) {
+            subdirList.add("lib/Bio/KBase");
         }
 
         // 1. build dir with moduleName
@@ -129,6 +136,7 @@ public class ModuleInitializer {
         templateFiles.put("module_run_tests", Paths.get(moduleDir, "test_local", "run_tests.sh"));
         templateFiles.put("module_run_bash", Paths.get(moduleDir, "test_local", "run_bash.sh"));
         templateFiles.put("module_run_docker", Paths.get(moduleDir, "test_local", "run_docker.sh"));
+        templateFiles.put("github_workflows", Paths.get(moduleDir, ".github", "workflows", "run_tests.yml"));
 
         switch (language) {
         case "java":
@@ -153,7 +161,9 @@ public class ModuleInitializer {
             templateFiles.put("module_tox", Paths.get(moduleDir, "tox.ini"));
             break;
         case "perl":
-            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.pl"));
+            templateFiles.put("module_cpanfile", Paths.get(moduleDir, "cpanfile"));
+            templateFiles.put("module_test_perl_client", Paths.get(moduleDir, "test", this.moduleName + "_impl.t"));
+            templateFiles.put("module_test_perl_compile", Paths.get(moduleDir, "test", "00_compile.t"));
             break;
         case "r":
             templateFiles.put("module_test_r_client", Paths.get(moduleDir, "test", this.moduleName + "_server_test.r"));

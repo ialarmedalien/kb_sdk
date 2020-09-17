@@ -53,6 +53,8 @@ public class ModuleBuilder {
 
     public static void main(String[] args) throws Exception {
 
+        System.out.println("Starting kb-sdk!");
+
         // set up the basic CLI argument parser with global -h and --help commands
         GlobalArgs gArgs = new GlobalArgs();
         JCommander jc = new JCommander(gArgs);
@@ -138,69 +140,6 @@ public class ModuleBuilder {
                     validateArgs.methodStoreUrl, validateArgs.allowSyncMethods);
             return mv.validateAll();
         } catch (Exception e) {
-=======
-    	// parse the arguments and gracefully catch any errors
-    	try {
-    		jc.parse(args);
-    	} catch (RuntimeException e) {
-    		showError("Command Line Argument Error", e.getMessage());
-    		System.exit(1);
-    	}
-
-    	// if the help flag is set, then show some help and exit
-    	if(gArgs.help) {
-    		showBriefHelp(jc, System.out);
-    		return;
-    	}
-
-	    // no command entered, just print brief info and exit
-	    if(jc.getParsedCommand()==null) {
-	    	showBriefHelp(jc, System.out);
-	    	return;
-	    }
-
-	    // if we get here, we have a valid command, so process it and do stuff
-	    int returnCode = 0;
-	    if(jc.getParsedCommand().equals(HELP_COMMAND)) {
-		    showCommandUsage(jc,help,System.out);
-
-	    } else if(jc.getParsedCommand().equals(INIT_COMMAND)) {
-	    	returnCode = runInitCommand(initArgs,jc);
-	    } else if(jc.getParsedCommand().equals(VALIDATE_COMMAND)) {
-	    	returnCode = runValidateCommand(validateArgs,jc);
-	    } else if(jc.getParsedCommand().equals(COMPILE_COMMAND)) {
-	    	returnCode = runCompileCommand(compileArgs,jc);
-        } else if(jc.getParsedCommand().equals(TEST_COMMAND)) {
-            returnCode = runTestCommand(testArgs,jc);
-	    } else if (jc.getParsedCommand().equals(VERSION_COMMAND)) {
-	        returnCode = runVersionCommand(versionArgs, jc);
-	    } else if (jc.getParsedCommand().equals(RENAME_COMMAND)) {
-	        returnCode = runRenameCommand(renameArgs, jc);
-	    } else if (jc.getParsedCommand().equals(INSTALL_COMMAND)) {
-	        returnCode = runInstallCommand(installArgs, jc);
-	    } else if (jc.getParsedCommand().equals(RUN_COMMAND)) {
-	        returnCode = runRunCommand(runArgs, jc);
-	    }
-
-	    if(returnCode!=0) {
-	    	System.exit(returnCode);
-	    }
-    }
-
-    private static int runValidateCommand(ValidateCommandArgs validateArgs, JCommander jc) {
-    	// initialize
-    	if(validateArgs.modules==null) {
-    		validateArgs.modules = new ArrayList<String>();
-    	}
-    	if(validateArgs.modules.size()==0) {
-    		validateArgs.modules.add(".");
-    	}
-    	try {
-    	    ModuleValidator mv = new ModuleValidator(validateArgs.modules,validateArgs.verbose,
-    	            validateArgs.methodStoreUrl, validateArgs.allowSyncMethods);
-    	    return mv.validateAll();
-    	} catch (Exception e) {
->>>>>>> 99deda8... Use github actions to build and test kb-sdk
             if (validateArgs.verbose)
                 e.printStackTrace();
             showError("Error while validating module", e.getMessage());

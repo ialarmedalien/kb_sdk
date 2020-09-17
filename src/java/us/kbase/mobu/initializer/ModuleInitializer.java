@@ -18,19 +18,23 @@ import us.kbase.templates.TemplateFormatter;
 
 public class ModuleInitializer {
     public static final String DEFAULT_LANGUAGE = "python";
+
     private String moduleName;
     private String userName;
     private String language;
     private boolean verbose;
     private File dir;
 
-    private static String[] subdirs = {"data",
+    private static String[] subdirs = { "data",
                                         "scripts",
                                         "lib",
                                         "test",
                                         "ui",
                                         "ui/narrative",
-                                        "ui/narrative/methods"};
+                                        "ui/narrative/methods",
+                                        ".github",
+                                        ".github/workflows"
+                                        };
 
     public ModuleInitializer(String moduleName, String userName, boolean verbose) {
         this(moduleName, userName, DEFAULT_LANGUAGE, verbose);
@@ -77,6 +81,7 @@ public class ModuleInitializer {
         else {
             subdirList.add("ui/narrative/methods/run_" + this.moduleName);
             subdirList.add("ui/narrative/methods/run_" + this.moduleName + "/img");
+            subdirList.add("lib/Bio/KBase");
         }
 
         // 1. build dir with moduleName
@@ -95,6 +100,7 @@ public class ModuleInitializer {
 
         Map<String, Object> moduleContext = new HashMap<String, Object>();
         moduleContext.put("module_name", this.moduleName);
+        moduleContext.put("module_name_lc", this.moduleName.toLowerCase());
         moduleContext.put("user_name", this.userName);
         moduleContext.put("spec_file", specFile);
         moduleContext.put("language", this.language);

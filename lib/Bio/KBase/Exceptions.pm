@@ -26,7 +26,6 @@ use Exception::Class (
         fields      => [ 'method_name' ],
         isa         => 'Bio::KBase::Exceptions::KBaseException',
     },
-
 );
 
 Bio::KBase::Exceptions::KBaseException->Trace( 1 );
@@ -56,4 +55,3 @@ sub full_message {
 }
 
 1;
-

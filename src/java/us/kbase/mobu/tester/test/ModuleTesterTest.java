@@ -21,26 +21,17 @@ import us.kbase.scripts.test.TestConfigHelper;
 
 public class ModuleTesterTest {
 
-<<<<<<< HEAD
     private static final String SIMPLE_MODULE_NAME = "ASimpleModule_for_unit_testing";
     private static final boolean cleanupAfterTests = true;
 
     private static List<String> createdModuleNames = new ArrayList<String>();
     private static AuthToken token;
-=======
-	private static final String SIMPLE_MODULE_NAME = "ASimpleModule_for_unit_testing";
-	private static final boolean cleanupAfterTests = true;
-
-	private static List<String> createdModuleNames = new ArrayList<String>();
-	private static AuthToken token;
->>>>>>> 99deda8... Use github actions to build and test kb-sdk
 
     @BeforeClass
     public static void beforeClass() throws Exception {
         token = TestConfigHelper.getToken();
     }
 
-<<<<<<< HEAD
     @AfterClass
     public static void tearDownModule() throws Exception {
         if (cleanupAfterTests)
@@ -63,30 +54,6 @@ public class ModuleTesterTest {
         if (module.exists() && module.isDirectory())
             FileUtils.deleteDirectory(module);
     }
-=======
-	@AfterClass
-	public static void tearDownModule() throws Exception {
-	    if (cleanupAfterTests)
-	        for (String moduleName : createdModuleNames)
-	            try {
-	                deleteDir(moduleName);
-	            } catch (Exception ex) {
-	                System.err.println("Error cleaning up module [" +
-	                        moduleName + "]: " + ex.getMessage());
-	            }
-	}
-
-	@After
-	public void afterText() {
-	    System.out.println();
-	}
-
-	private static void deleteDir(String moduleName) throws Exception {
-		File module = new File(moduleName);
-		if (module.exists() && module.isDirectory())
-			FileUtils.deleteDirectory(module);
-	}
->>>>>>> 99deda8... Use github actions to build and test kb-sdk
 
     private void init(String lang, String moduleName) throws Exception {
         deleteDir(moduleName);
@@ -101,15 +68,9 @@ public class ModuleTesterTest {
         return runTestsInDocker(moduleDir, token);
     }
 
-<<<<<<< HEAD
     public static int runTestsInDocker(File moduleDir, AuthToken token) throws Exception {
         return runTestsInDocker(moduleDir, token, false);
     }
-=======
-	public static int runTestsInDocker(File moduleDir, AuthToken token) throws Exception {
-	    return runTestsInDocker(moduleDir, token, false);
-	}
->>>>>>> 99deda8... Use github actions to build and test kb-sdk
 
     public static int runTestsInDocker(
             final File moduleDir,
@@ -131,7 +92,6 @@ public class ModuleTesterTest {
         return exitCode;
     }
 
-<<<<<<< HEAD
     @Test
     public void testPerlModuleExample() throws Exception {
         System.out.println("Test [testPerlModuleExample]");
@@ -139,41 +99,6 @@ public class ModuleTesterTest {
         String moduleName = SIMPLE_MODULE_NAME + "Perl";
         init(lang, moduleName);
         int exitCode = runTestsInDocker(moduleName);
-=======
-	@Test
-	public void testPerlModuleExample() throws Exception {
-	    System.out.println("Test [testPerlModuleExample]");
-		String lang = "perl";
-		String moduleName = SIMPLE_MODULE_NAME + "Perl";
-		init(lang, moduleName);
-		int exitCode = runTestsInDocker(moduleName);
-		Assert.assertEquals(0, exitCode);
-	}
-
-	@Test
-	public void testPerlModuleError() throws Exception {
-	    System.out.println("Test [testPerlModuleError]");
-	    String lang = "perl";
-	    String moduleName = SIMPLE_MODULE_NAME + "PerlError";
-	    init(lang, moduleName);
-	    File implFile = new File(moduleName + "/lib/" + moduleName + "/" + moduleName + "Impl.pm");
-	    String implText = FileUtils.readFileToString(implFile);
-	    implText = implText.replace("    #BEGIN filter_contigs",
-	            "    #BEGIN filter_contigs\n" +
-	            "    die \"Special error\";");
-	    FileUtils.writeStringToFile(implFile, implText);
-	    int exitCode = runTestsInDocker(moduleName);
-	    Assert.assertEquals(2, exitCode);
-	}
-
-	@Test
-	public void testPythonModuleExample() throws Exception {
-	    System.out.println("Test [testPythonModuleExample]");
-	    String lang = "python";
-	    String moduleName = SIMPLE_MODULE_NAME + "Python";
-	    init(lang, moduleName);
-	    int exitCode = runTestsInDocker(moduleName);
->>>>>>> 99deda8... Use github actions to build and test kb-sdk
         Assert.assertEquals(0, exitCode);
     }
 

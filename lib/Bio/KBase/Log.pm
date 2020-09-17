@@ -261,10 +261,9 @@ sub update_config {
 
     # Retrieving config variables.
     my $api_url = "";
-    if (   defined $self->{ _mlog_config_file }
+    if ( defined $self->{ _mlog_config_file }
         && -e $self->{ _mlog_config_file }
-        && -s $self->{ _mlog_config_file } > 0 )
-    {
+        && -s $self->{ _mlog_config_file } > 0 ) {
         my $cfg      = new Config::Simple( $self->{ _mlog_config_file } );
         my $cfgitems = $cfg->get_block( $_GLOBAL );
         my $subitems = $cfg->get_block( $self->{ _subsystem } );
@@ -456,9 +455,8 @@ sub log_message {
     ++$self->{ msg_count };
     ++$self->{ _msgs_since_config_update };
 
-    if (   $self->{ _msgs_since_config_update } >= $self->{ _recheck_api_msg }
-        || $self->_get_time_since_start() >= $self->{ _recheck_api_time } )
-    {
+    if ( $self->{ _msgs_since_config_update } >= $self->{ _recheck_api_msg }
+        || $self->_get_time_since_start() >= $self->{ _recheck_api_time } ) {
         $self->update_config();
     }
 
@@ -479,4 +477,3 @@ sub log_message {
 }
 
 1;
-

@@ -102,5 +102,3 @@ Return the name of the service currently configured.
 =cut
 
 1;
-
-
